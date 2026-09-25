@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+#binary, database files
+*.database
+*.data
+*.db
+
+#build artifacts
+*.egg-info/
+build/
+dist/
+
+.vscode
+!.vscode/
+!.vscode/launch.json

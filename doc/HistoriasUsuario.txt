@@ -1,0 +1,20 @@
+Ejemplos de Historias de Usuario
+================================
+
+Descripción: Listar los empleados de una compañia
+Criterios de Aceptación:
+El usuario especificará el nombre de la compañia de la cual quiere obtener sus empleado. 
+Si la compañia no existe, se emite un mensaje indicativo.
+En otro caso, se listarán todos los usuarios que pertenecen a esa compañia, indicando
+el nombre de la compañia, el identificador y nombre del empleado y el salario.
+Se emitirá como resumen el total de empleados y la media de los salarios de los empleados
+
+Descripción: Insertar un empleado en una compañia
+Criterios de Aceptación:
+Permitirá el registro de un nuevo empleado en una compañia. Si la compañia no existe se emitirá
+un mensaje indicativo. Los datos del nuevo empleado se introducirán desde un formulario.
+
+Descripción: Mostrar salario medio de todos los empleados por compañia.
+Criterios de Aceptación:
+Para cada compañia, se mostrará una tabla con el salario medio de todos sus empleados (nombre compañia, salario medio). 
+En el caso de que unacompañia no tuviese registrados empleados, se mostrará como salario medio 0.
