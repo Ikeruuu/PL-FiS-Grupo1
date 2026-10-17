@@ -13,3 +13,43 @@ insert into Employee (id,name,salary,birthDate,startDate,endDate,idCompany) valu
 insert into Employee (id,name,salary,birthDate,startDate,endDate,idCompany) values (null,'E6',1000,'2000-01-01','2021-01-01', '2023-01-01',3);
 
 
+--Centro Deportivo Inteligente
+
+--Modalidad (datos fijos del cliente)
+insert into Modalidad(id,nombre) values(1,'Natación');
+insert into Modalidad(id,nombre) values(2,'Pilates');
+insert into Modalidad(id,nombre) values(3,'Acondicionamiento físico general');
+insert into Modalidad(id,nombre) values(4,'Pádel');
+insert into Modalidad(id,nombre) values(5,'Tenis');
+--Nivel (datos fijos del cliente)
+insert into Nivel(id,nombre) values(1,'Iniciación');
+insert into Nivel(id,nombre) values(2,'Medio');
+insert into Nivel(id,nombre) values(3,'Avanzado');
+--Instalacion (datos de prueba, HU3)
+insert into Instalacion(id,nombre,capacidad) values(1,'Piscina',25);
+insert into Instalacion(id,nombre,capacidad) values(2,'Sala polivalente',15);
+insert into Instalacion(id,nombre,capacidad) values(3,'Gimnasio',20);
+insert into Instalacion(id,nombre,capacidad) values(4,'Pista de pádel 1',4);
+insert into Instalacion(id,nombre,capacidad) values(5,'Pista de pádel 2',4);
+insert into Instalacion(id,nombre,capacidad) values(6,'Pista de tenis',4);
+--Actividad (datos de prueba). Las tres primeras ya tienen instalación asignada
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,4,2,'2026-10-01','2027-06-30',4,4);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(2,1,1,'2026-10-01','2027-06-30',20,1);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,2,1,'2026-10-01','2026-12-31',12,2);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(4,4,1,'2026-10-01','2027-06-30',4,null);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(5,4,3,'2026-10-01','2027-06-30',4,null);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(6,2,2,'2027-01-01','2027-06-30',15,null);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(7,3,2,'2026-10-01','2027-06-30',20,null);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(8,5,1,'2026-10-01','2027-06-30',4,null);
+--Horario (1=lunes ... 7=domingo)
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,1,1,'18:00','19:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,1,3,'18:00','19:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,2,2,'10:00','11:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,2,4,'10:00','11:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,3,1,'09:00','10:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,4,1,'18:30','19:30');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,5,1,'19:00','20:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,5,3,'19:00','20:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,6,1,'09:00','10:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,7,5,'17:00','18:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,8,6,'10:00','11:30');
