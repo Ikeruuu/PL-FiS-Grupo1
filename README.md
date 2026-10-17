@@ -15,6 +15,7 @@ SampleProject
 │   ├── main.py        Punto de entrada y configuración del logging (mensajes)
 │   ├── config.py      Rutas de la base de datos y scripts SQL
 │   ├── employees/     Capa de empleados (modelo y vista)
+│   ├── instalaciones/ HU3 Asignar una instalación a una actividad (modelo y vista)
 │   └── util/          Acceso a datos, validaciones y excepciones
 └── test/              Tests unitarios (unittest / pytest)
 ```
@@ -60,7 +61,8 @@ La configuración usa `src.main` como módulo para que los imports del paquete
 `src` se resuelvan correctamente.
 
 > Nota: en cada arranque se **borra y recrea** el esquema y se recargan los datos
-> iniciales (fíjate en `src/main.py`). El menú se cierra con la opción 5.
+> iniciales (fíjate en `src/main.py`). El menú principal se cierra con la opción 0.
+> La HU3 está en **2.- Instalaciones > 1.- Asignar instalación a una actividad**.
 
 ## Tests
 

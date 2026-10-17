@@ -1,0 +1,43 @@
+HU3. Asignar una instalación a una actividad
+=============================================
+Responsable: Iker Argüelles Eduarte
+Rama: HU-03-asignar-instalacion
+Criterios validados por el Product Owner (Claudio de la Riva) el 14/10/2026.
+
+Descripción: Como responsable de actividades deportivas, quiero asignar una instalación a una
+actividad para que no haya dos actividades usando la misma instalación a la vez.
+
+Criterios de aceptación:
+1. Entrada: el usuario elige una actividad que aún no tenga instalación y una instalación de la
+   lista. Las instalaciones son datos de prueba (resources/data.sql) con nombre y capacidad.
+2. No existe: si no hay actividades, «No hay actividades registradas»; si todas tienen instalación,
+   «Todas las actividades tienen instalación asignada»; si no hay instalaciones, «No hay
+   instalaciones registradas»; si la actividad o la instalación indicada no existe, se emite un
+   mensaje de error.
+3. Capacidad: si las plazas de la actividad superan la capacidad de la instalación, no se asigna
+   («La actividad tiene 20 plazas y la instalación admite 15»).
+4. Colisión: una instalación se comparte si no hay colisión. Hay colisión cuando otra actividad
+   asignada a esa instalación coincide en día de la semana, solapa su franja horaria y solapa su
+   periodo de fechas. Se indica con qué actividad choca, con día y hora.
+5. Una sola instalación por actividad: si ya tiene una, «La actividad ya tiene instalación
+   asignada» y no se cambia.
+6. Éxito: «Instalación X asignada a la actividad Y».
+7. Casos límite: franjas contiguas (18:00 fin, 18:00 inicio) no colisionan; plazas iguales a la
+   capacidad se pueden asignar.
+
+Implementación:
+- resources/schema.sql: tablas Modalidad, Nivel, Instalacion, Actividad (idInstalacion nullable) y Horario.
+- src/instalaciones/instalacionModel.py: consultas y reglas (asignarInstalacion, getColisiones).
+- src/instalaciones/instalacionView.py: menú de consola (Menú principal > 2 Instalaciones).
+- test/testInstalacion.py: pruebas de cada criterio.
+
+Datos de prueba para la demo (data.sql):
+- Actividad 4 en Pista de pádel 1 -> colisión con Pádel medio (lunes 18:00–19:00).
+- Actividad 5 en Pista de pádel 1 -> se asigna (franja contigua 19:00).
+- Actividad 7 en Sala polivalente -> capacidad superada (20 > 15).
+- Actividad 6 en Sala polivalente -> se asigna (misma franja que Pilates iniciación pero de enero a junio).
+
+Aviso al equipo: el profesor indicó que al abrirse el periodo de inscripción todas las actividades
+deben tener instalación asignada (afecta a periodos de inscripción / inscribirse).
+Las tablas Modalidad, Nivel, Actividad y Horario son un borrador mínimo: si «Crear una actividad»
+define otra estructura, hay que unificarla en schema.sql.
