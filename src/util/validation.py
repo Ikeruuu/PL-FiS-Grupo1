@@ -23,6 +23,17 @@ def validate_salary(value: str) -> int:
     return salary
 
 
+def validate_positive_int(value: str) -> int:
+    try:
+        number = int(value.strip())
+    except ValueError as error:
+        raise ValidationError("Debe ser un número entero.") from error
+
+    if number <= 0:
+        raise ValidationError("Debe ser un número mayor que 0.")
+    return number
+
+
 def validate_date(value: str, allow_empty: bool = False, birth_date: bool = False) -> str | None:
     normalized = value.strip()
     if allow_empty and not normalized:
