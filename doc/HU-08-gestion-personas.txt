@@ -1,0 +1,40 @@
+HU8. Gestionar los datos de personas (socios y no socios)
+==========================================================
+Responsable: Iker Argüelles Eduarte
+Rama: HU-08-gestion-personas (creada a partir de HU-09-ocupacion-instalacion para evitar conflictos
+en schema.sql, data.sql y main.py)
+Criterios validados por el Product Owner (Claudio de la Riva) el 14/10/2026.
+
+Descripción: Como personal de secretaría, quiero registrar a los no socios y consultar los datos de
+cualquier persona para tener información consistente y sin duplicados.
+
+Criterios de aceptación:
+1. Socios precargados: los socios ya están en el sistema (datos de prueba en data.sql). Su número de
+   socio es secuencial por orden de antigüedad. Esta historia no registra socios.
+2. Registro de no socios: DNI, nombre y apellidos, fecha de nacimiento, teléfono y correo.
+3. Obligatorios: DNI, nombre, apellidos y al menos un medio de contacto. Si falta alguno, se indica
+   cuál y no se guarda.
+4. Validaciones: el correo debe contener @; la fecha de nacimiento no puede ser futura. El DNI no
+   se valida en formato (sin restricciones de identificación en este sprint).
+5. Duplicados: si el DNI es de un socio, «Esta persona ya es socia»; si es de un no socio, «Ya existe
+   una persona con ese DNI» junto con sus datos. En ambos casos no se registra.
+6. Consulta: por DNI o por número de socio. Se muestran los datos, si es socia o no y, si lo es, su
+   número de socio. Si no se encuentra, «No existe ninguna persona con ese identificador».
+7. Normalización: el DNI se guarda en mayúsculas y sin espacios ni guiones («12345678z» y
+   «12345678-Z» son la misma persona).
+Fuera de este sprint: pasar de no socio a socio, modificar datos y dar de baja.
+
+Implementación:
+- resources/schema.sql: tabla Persona (numSocio y fechaAltaSocio a null para los no socios).
+- resources/data.sql: 5 socios (números 1 a 5 por antigüedad) y 2 no socios de prueba.
+- src/personas/personaModel.py: consultas, validaciones y normalización.
+- src/personas/personaView.py: menú Personas (Menú principal > 3).
+- test/testPersona.py: pruebas de cada criterio.
+
+Datos de prueba para la demo (Menú principal > 3):
+- Registrar con DNI 10000001-a -> «Esta persona ya es socia» y muestra a Marta García López (socia 1).
+- Registrar con DNI 20000001f -> «Ya existe una persona con ese DNI» (Jorge Sánchez Vega, no socio).
+- Registrar sin teléfono ni correo -> pide al menos un medio de contacto.
+- Registrar con correo sin @ o fecha de nacimiento futura -> error de validación.
+- Consultar por número de socio 3 -> Ana Suárez Menéndez, socia 3.
+- Consultar por DNI 99999999Z -> «No existe ninguna persona con ese identificador».
