@@ -17,7 +17,7 @@ dev = ["pytest"]
 sample-project = "src.main:main"
 
 [tool.setuptools]
-packages = ["src", "src.employees", "src.instalaciones", "src.util"]
+packages = ["src", "src.employees", "src.instalaciones", "src.personas", "src.util"]
 
 [tool.pytest.ini_options]
 python_files = "test*.py"
