@@ -1,0 +1,38 @@
+HU9. Consultar la ocupación de una instalación
+===============================================
+Responsable: Iker Argüelles Eduarte
+Rama: HU-09-ocupacion-instalacion (creada a partir de HU-03-asignar-instalacion, de la que depende)
+Historia propuesta por el equipo y validada por el Product Owner (Claudio de la Riva) el 14/10/2026.
+
+Descripción: Como responsable de actividades deportivas, quiero consultar la ocupación de una
+instalación para ver qué huecos libres tiene antes de asignarla a una actividad.
+
+Criterios de aceptación:
+1. Entrada: el usuario elige una instalación y un periodo con fecha de inicio y de fin. Si no indica
+   periodo, se usa el curso completo, de octubre a junio.
+2. No existe: si no hay instalaciones registradas, «No hay instalaciones registradas»; si la
+   instalación indicada no existe, se emite un mensaje de error.
+3. Validación de fechas: si la fecha de inicio es posterior a la de fin, error de fechas incoherentes.
+4. Qué se muestra: una lista en pantalla, ordenada por día de la semana y hora. Cada franja ocupada
+   indica la hora de inicio y de fin, la actividad (modalidad y nivel) y las fechas en que la ocupa.
+5. Huecos libres: para cada día se listan las franjas libres dentro del horario del centro, de 8:00
+   a 22:00 todos los días.
+6. Sin actividades: «La instalación está libre en todo el periodo (8:00–22:00)».
+7. Casos límite: solo aparecen las actividades cuyo periodo se solapa con el consultado, aunque sea
+   un solo día; dos actividades contiguas se muestran sin hueco entre ellas; una actividad que
+   empieza a las 8:00 o termina a las 22:00 no deja hueco en ese extremo.
+
+Implementación:
+- src/instalaciones/ocupacionModel.py: consulta de franjas, cálculo de huecos y periodo del curso.
+- src/instalaciones/instalacionView.py: opción 2 del menú Instalaciones.
+- test/testOcupacion.py: pruebas de cada criterio.
+- resources/data.sql: actividades 9 y 10 en la Piscina para la demo.
+
+Datos de prueba para la demo (Menú principal > 2 > 2):
+- Piscina, curso completo: lunes ocupada 08:00–09:00 y 21:00–22:00 (sin hueco en los extremos),
+  martes 10:00–11:00 y 11:00–12:00 contiguas (sin hueco entre ellas).
+- Piscina del 2026-10-01 al 2026-12-31: desaparece la de martes 11:00–12:00 (empieza en enero).
+- Gimnasio: «La instalación está libre en todo el periodo (8:00–22:00)».
+- Fecha de inicio 2027-01-01 y fin 2026-12-31: error de fechas incoherentes.
+
+Nota: los festivos no se tienen en cuenta (la consulta es semanal).
