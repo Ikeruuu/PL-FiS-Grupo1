@@ -41,6 +41,9 @@ insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInsta
 insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(6,2,2,'2027-01-01','2027-06-30',15,null);
 insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(7,3,2,'2026-10-01','2027-06-30',20,null);
 insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(8,5,1,'2026-10-01','2027-06-30',4,null);
+--Actividades de la Piscina para la consulta de ocupación (extremos 8:00 y 22:00 y franjas contiguas)
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(9,1,3,'2026-10-01','2027-06-30',15,1);
+insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(10,1,2,'2027-01-01','2027-06-30',20,1);
 --Horario (1=lunes ... 7=domingo)
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,1,1,'18:00','19:00');
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,1,3,'18:00','19:00');
@@ -53,3 +56,6 @@ insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,5,3
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,6,1,'09:00','10:00');
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,7,5,'17:00','18:00');
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,8,6,'10:00','11:30');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,9,1,'08:00','09:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,9,1,'21:00','22:00');
+insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,10,2,'11:00','12:00');
