@@ -50,6 +50,12 @@ class PersonaModel:
                                    num_socio)
         return res[0] if len(res) == 1 else None
 
+    #Número de socios y de no socios registrados
+    def contarPersonas(self):
+        res = self.db.executeQuery("""select count(numSocio) as socios, count(*) - count(numSocio) as noSocios
+                                      from Persona""")
+        return res[0]
+
     #Comprueba los datos de un no socio y devuelve la lista de errores (vacía si son correctos)
     def validarNoSocio(self, dni, nombre, apellidos, fecha_nacimiento, telefono, correo, hoy=None):
         errores = []

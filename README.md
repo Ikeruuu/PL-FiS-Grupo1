@@ -17,6 +17,7 @@ SampleProject
 │   ├── employees/     Capa de empleados (modelo y vista)
 │   ├── instalaciones/ HU3 Asignar instalación y HU9 Consultar ocupación (modelos y vista)
 │   ├── personas/      HU8 Gestionar los datos de personas (modelo y vista)
+│   ├── gui/           Interfaz gráfica (Tkinter): ventana principal y pantallas
 │   └── util/          Acceso a datos, validaciones y excepciones
 └── test/              Tests unitarios (unittest / pytest)
 ```
@@ -50,19 +51,24 @@ Si no quieres activar el entorno, ejecuta el lanzador con su ruta completa:
 ## Ejecución
 
 ```powershell
-# Con el entorno virtual activado
-sample-project
-
-# Sin instalar, desde la raíz del proyecto
+# Interfaz gráfica (por defecto)
 python -m src.main
+
+# Menú de consola
+python -m src.main --consola
 ```
 
 En VS Code, abre **Ejecutar y depurar** y selecciona **Ejecutar SampleProject**.
 La configuración usa `src.main` como módulo para que los imports del paquete
 `src` se resuelvan correctamente.
 
+La interfaz gráfica usa Tkinter (incluido en Python para Windows) y tiene cuatro pantallas:
+**Inicio** (resumen del centro), **Asignar instalación** (HU3), **Ocupación** (HU9) y
+**Personas** (HU8). Usa los mismos modelos que la consola, así que las reglas de negocio
+son las mismas. Si Tkinter no está disponible, se abre el menú de consola.
+
 > Nota: en cada arranque se **borra y recrea** el esquema y se recargan los datos
-> iniciales (fíjate en `src/main.py`). El menú principal se cierra con la opción 0.
+> iniciales (fíjate en `src/main.py`). En consola, el menú principal se cierra con la opción 0.
 > La HU3 está en **2.- Instalaciones > 1.- Asignar instalación a una actividad** y la HU9 en
 > **2.- Instalaciones > 2.- Consultar ocupación de una instalación**. La HU8 está en **3.- Personas**.
 
