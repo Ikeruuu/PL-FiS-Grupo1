@@ -21,7 +21,7 @@ class Aviso(tk.Frame):
         super().__init__(master, bg=e.FONDO, height=1)
         self.icono = tk.Label(self, font=e.fuente(12, "bold"), padx=12)
         self.texto = tk.Label(self, font=e.fuente(10), justify="left", anchor="w", pady=10, padx=4)
-        self.texto.bind("<Configure>", lambda ev: self.texto.configure(wraplength=max(ev.width - 10, 200)))
+        self.texto.bind("<Configure>", lambda ev: self.texto.configure(wraplength=max(ev.width - e.px(10), e.px(200))))
         self.tipo = None
 
     def mostrar(self, mensaje, tipo="info"):
@@ -48,7 +48,7 @@ class Aviso(tk.Frame):
 def tarjeta(master, **pack):
     '''Marco blanco con borde fino y margen interior.'''
     borde = tk.Frame(master, bg=e.BORDE)
-    interior = tk.Frame(borde, bg=e.TARJETA, padx=18, pady=16)
+    interior = tk.Frame(borde, bg=e.TARJETA, padx=e.px(18), pady=e.px(16))
     interior.pack(fill="both", expand=True, padx=1, pady=1)
     if pack:
         borde.pack(**pack)
@@ -69,11 +69,11 @@ def tabla(master, columnas, altura=8, arbol=False):
     tv = ttk.Treeview(marco, columns=[c[0] for c in columnas], height=altura,
                       show="tree headings" if arbol else "headings", selectmode="browse")
     if arbol:
-        tv.column("#0", width=120, minwidth=100, stretch=False)
+        tv.column("#0", width=e.px(120), minwidth=e.px(100), stretch=False)
         tv.heading("#0", text="Día", anchor="w")
     for ident, titulo, ancho, stretch in columnas:
         tv.heading(ident, text=titulo, anchor="w")
-        tv.column(ident, width=ancho, minwidth=50, stretch=stretch, anchor="w")
+        tv.column(ident, width=e.px(ancho), minwidth=e.px(50), stretch=stretch, anchor="w")
     barra = ttk.Scrollbar(marco, orient="vertical", command=tv.yview)
 
     #La barra solo se muestra cuando hay más filas de las que caben

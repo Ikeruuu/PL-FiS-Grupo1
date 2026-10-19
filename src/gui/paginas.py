@@ -28,7 +28,7 @@ class Pagina(ttk.Frame):
     '''Página base: se refresca cada vez que se muestra.'''
 
     def __init__(self, master, app):
-        super().__init__(master, padding=(32, 26))
+        super().__init__(master, padding=(e.px(32), e.px(26)))
         self.app = app
 
     def refrescar(self):
@@ -103,7 +103,7 @@ class PaginaAsignar(Pagina):
         cuerpo = ttk.Frame(self)
         cuerpo.pack(fill="both", expand=True)
         cuerpo.columnconfigure(0, weight=1)
-        cuerpo.columnconfigure(1, weight=0, minsize=290)
+        cuerpo.columnconfigure(1, weight=0, minsize=e.px(290))
         cuerpo.rowconfigure(0, weight=1)
 
         izq = tarjeta(cuerpo)
@@ -112,7 +112,7 @@ class PaginaAsignar(Pagina):
         marco, self.tablaActividades = tabla(izq, [
             ("id", "ID", 36, False), ("actividad", "Actividad", 170, True),
             ("plazas", "Plazas", 56, False), ("horario", "Horario", 190, True),
-            ("fechas", "Periodo", 150, False)], altura=10)
+            ("fechas", "Periodo", 160, False)], altura=10)
         marco.pack(fill="both", expand=True)
         self.tablaActividades.bind("<<TreeviewSelect>>", lambda ev: self._marcarCapacidad())
 

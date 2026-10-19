@@ -38,6 +38,18 @@ class TestGui(unittest.TestCase):
         self.assertEqual(str(valores["sinInstalacion"][0].cget("text")), "5")
         self.assertEqual(str(valores["socios"][0].cget("text")), "5")
 
+    #El nombre del centro y las opciones del menú caben enteros en la barra lateral
+    def testNombreNoSeCorta(self):
+        self.app.update_idletasks()
+        lateral = self.app.botones["inicio"].master
+        marca = lateral.winfo_children()[0]
+        ancho = int(lateral.cget("width"))
+        for etiqueta in marca.winfo_children():
+            self.assertLessEqual(etiqueta.winfo_reqwidth() + 2 * int(marca.cget("padx")), ancho,
+                                 etiqueta.cget("text"))
+        for boton in self.app.botones.values():
+            self.assertLessEqual(boton.winfo_reqwidth(), ancho, boton.cget("text"))
+
     def testNavegacion(self):
         for clave in ("asignar", "ocupacion", "personas", "inicio"):
             self.app.mostrar(clave)

@@ -4,6 +4,7 @@ barra lateral de navegación y área de contenido con una página por funcionali
 '''
 import logging
 import tkinter as tk
+from tkinter import font as tkfont
 
 from src.gui import estilos as e
 from src.gui.paginas import PaginaAsignar, PaginaInicio, PaginaOcupacion, PaginaPersonas
@@ -23,11 +24,11 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
 class CentroDeportivoApp(tk.Tk):
 
     def __init__(self, db_path=None):
+        e.activarAltaResolucion()
         super().__init__()
         self.title("Centro Deportivo Inteligente")
-        self.geometry("1280x760")
-        self.minsize(1100, 660)
         e.configurarEstilos(self)
+        self._ajustarTamano()
         self.report_callback_exception = self._errorInesperado
 
         self.instalaciones = InstalacionModel(db_path)
@@ -41,27 +42,40 @@ class CentroDeportivoApp(tk.Tk):
         self.actual = None
         self.mostrar("inicio")
 
+    #Tamaño inicial según la escala de la pantalla, sin pasar nunca del 92 % de ella, y centrada
+    def _ajustarTamano(self):
+        pantallaAncho, pantallaAlto = self.winfo_screenwidth(), self.winfo_screenheight()
+        ancho = min(e.px(1280), int(pantallaAncho * 0.92))
+        alto = min(e.px(760), int(pantallaAlto * 0.88))
+        self.minsize(min(e.px(1040), ancho), min(e.px(620), alto))
+        x, y = (pantallaAncho - ancho) // 2, max(0, (pantallaAlto - alto) // 3)
+        self.geometry(f"{ancho}x{alto}+{x}+{y}")
+
     def _crearLateral(self):
-        lateral = tk.Frame(self, bg=e.NAVY, width=220)
+        #El ancho de la barra se calcula a partir del texto más largo, para que nunca se corte
+        margen = e.px(22)
+        textoMarca = tkfont.Font(font=e.fuente(14, "bold")).measure("Centro Deportivo")
+        textoMenu = max(tkfont.Font(font=e.fuente(11, "bold")).measure(t) for _, t, _ in SECCIONES)
+        ancho = max(e.px(230), textoMarca + 2 * margen + e.px(8), textoMenu + 2 * margen + e.px(8))
+        lateral = tk.Frame(self, bg=e.NAVY, width=ancho)
         lateral.pack(side="left", fill="y")
         lateral.pack_propagate(False)
 
-        marca = tk.Frame(lateral, bg=e.NAVY, padx=22, pady=26)
+        marca = tk.Frame(lateral, bg=e.NAVY, padx=margen, pady=e.px(26))
         marca.pack(fill="x")
-        tk.Label(marca, text="◆", bg=e.NAVY, fg=e.ACENTO, font=e.fuente(22, "bold")).pack(side="left")
-        textos = tk.Frame(marca, bg=e.NAVY, padx=10)
-        textos.pack(side="left")
-        tk.Label(textos, text="Centro Deportivo", bg=e.NAVY, fg="white",
-                 font=e.fuente(13, "bold")).pack(anchor="w")
-        tk.Label(textos, text="Inteligente", bg=e.NAVY, fg=e.TEXTO_LATERAL,
-                 font=e.fuente(10)).pack(anchor="w")
+        tk.Label(marca, text="CD", bg=e.ACENTO, fg="white", font=e.fuente(11, "bold"),
+                 padx=e.px(8), pady=e.px(4)).pack(anchor="w", pady=(0, e.px(12)))
+        tk.Label(marca, text="Centro Deportivo", bg=e.NAVY, fg="white", anchor="w",
+                 font=e.fuente(14, "bold")).pack(fill="x")
+        tk.Label(marca, text="Inteligente", bg=e.NAVY, fg=e.TEXTO_LATERAL, anchor="w",
+                 font=e.fuente(11)).pack(fill="x")
 
         tk.Label(lateral, text="MENÚ", bg=e.NAVY, fg="#7A8BA3", font=e.fuente(8, "bold"),
-                 padx=24).pack(anchor="w", pady=(8, 6))
+                 padx=margen).pack(anchor="w", pady=(e.px(8), e.px(6)))
         self.botones = {}
         for clave, texto, _ in SECCIONES:
             boton = tk.Label(lateral, text=texto, bg=e.NAVY, fg=e.TEXTO_LATERAL, anchor="w",
-                             font=e.fuente(11), padx=24, pady=11, cursor="hand2")
+                             font=e.fuente(11), padx=margen, pady=e.px(11), cursor="hand2")
             boton.pack(fill="x")
             boton.bind("<Button-1>", lambda ev, c=clave: self.mostrar(c))
             boton.bind("<Enter>", lambda ev, c=clave: self._hover(c, True))
@@ -69,7 +83,7 @@ class CentroDeportivoApp(tk.Tk):
             self.botones[clave] = boton
 
         tk.Label(lateral, text="FIS · Curso 2026-27", bg=e.NAVY, fg="#7A8BA3",
-                 font=e.fuente(8), padx=24, pady=18).pack(side="bottom", anchor="w")
+                 font=e.fuente(8), padx=margen, pady=e.px(18)).pack(side="bottom", anchor="w")
 
     def _hover(self, clave, dentro):
         if clave != self.actual:

@@ -2,6 +2,8 @@
 Colores, fuentes y estilos ttk de la interfaz gráfica.
 Se usa el tema "clam" porque permite personalizar colores en Windows, Linux y macOS.
 '''
+import os
+import sys
 from tkinter import font as tkfont
 from tkinter import ttk
 
@@ -35,6 +37,44 @@ FUENTE = "Segoe UI"
 FUENTES_PREFERIDAS = ["Segoe UI", "Inter", "Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"]
 
 
+#Factor de escala de la pantalla (1.0 = 96 ppp; 1.5 = Windows al 150 %). Se calcula al arrancar.
+ESCALA = 1.0
+
+
+#Convierte un tamaño en píxeles de diseño (a 96 ppp) a píxeles reales de la pantalla
+def px(valor):
+    return int(round(valor * ESCALA))
+
+
+#En Windows, declara la aplicación "DPI-aware" para que el sistema no la amplíe como una
+#imagen (eso es lo que deja las fuentes borrosas en pantallas con escalado al 125 % o 150 %).
+#Debe llamarse antes de crear la ventana.
+def activarAltaResolucion():
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except (AttributeError, OSError):
+            ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+
+#Calcula la escala a partir de los píxeles por pulgada reales. La variable de entorno
+#CDI_ESCALA permite forzarla (útil para probar cómo se ve en otras pantallas).
+def calcularEscala(root):
+    global ESCALA
+    forzada = os.environ.get("CDI_ESCALA")
+    if forzada:
+        ESCALA = float(forzada)
+        root.tk.call("tk", "scaling", ESCALA * 96 / 72)
+    else:
+        ESCALA = max(1.0, root.winfo_fpixels("1i") / 96)
+    return ESCALA
+
+
 def fuente(tamano=10, peso="normal"):
     return (FUENTE, tamano, peso)
 
@@ -48,6 +88,7 @@ def elegirFuente(root):
 
 
 def configurarEstilos(root):
+    calcularEscala(root)
     elegirFuente(root)
     estilo = ttk.Style(root)
     estilo.theme_use("clam")
@@ -67,24 +108,24 @@ def configurarEstilos(root):
 
     #Botones
     estilo.configure("Primario.TButton", background=ACENTO, foreground="white", borderwidth=0,
-                     focusthickness=0, padding=(18, 9), font=fuente(10, "bold"))
+                     focusthickness=0, padding=(px(18), px(9)), font=fuente(10, "bold"))
     estilo.map("Primario.TButton", background=[("active", ACENTO_HOVER), ("disabled", "#9CA3AF")])
     estilo.configure("Secundario.TButton", background=TARJETA, foreground=TEXTO, bordercolor=BORDE,
-                     padding=(14, 8))
+                     padding=(px(14), px(8)))
     estilo.map("Secundario.TButton", background=[("active", DIA_FONDO)])
 
     #Entradas
     estilo.configure("TEntry", fieldbackground="white", bordercolor=BORDE, lightcolor=BORDE,
-                     padding=6)
-    estilo.configure("TCombobox", fieldbackground="white", bordercolor=BORDE, padding=6)
+                     padding=px(6))
+    estilo.configure("TCombobox", fieldbackground="white", bordercolor=BORDE, padding=px(6))
     estilo.map("TCombobox", fieldbackground=[("readonly", "white")],
                selectbackground=[("readonly", "white")], selectforeground=[("readonly", TEXTO)])
 
     #Tablas
     estilo.configure("Treeview", background="white", fieldbackground="white", foreground=TEXTO,
-                     rowheight=30, bordercolor=BORDE, borderwidth=0, font=fuente(10))
+                     rowheight=px(30), bordercolor=BORDE, borderwidth=0, font=fuente(10))
     estilo.configure("Treeview.Heading", background=DIA_FONDO, foreground=TEXTO_SUAVE,
-                     font=fuente(9, "bold"), relief="flat", padding=(8, 6))
+                     font=fuente(9, "bold"), relief="flat", padding=(px(8), px(6)))
     estilo.map("Treeview", background=[("selected", "#BFDBFE")], foreground=[("selected", TEXTO)])
     estilo.map("Treeview.Heading", background=[("active", BORDE)])
     return estilo
