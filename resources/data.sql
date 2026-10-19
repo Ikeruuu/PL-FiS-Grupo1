@@ -59,3 +59,13 @@ insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,8,6
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,9,1,'08:00','09:00');
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,9,1,'21:00','22:00');
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,10,2,'11:00','12:00');
+--Persona (datos maestros de prueba, HU8). Los socios ya están en el sistema y su número
+--de socio es secuencial por orden de antigüedad (fecha de alta como socio).
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'10000001A','Marta','García López','1975-03-12','600111001','marta.garcia@example.com',1,'2005-09-01');
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'10000002B','Luis','Fernández Díaz','1982-07-25','600111002',null,2,'2009-01-15');
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'10000003C','Ana','Suárez Menéndez','1990-11-03',null,'ana.suarez@example.com',3,'2014-06-20');
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'10000004D','Pablo','Álvarez Rodríguez','2001-02-17','600111004','pablo.alvarez@example.com',4,'2019-10-02');
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'10000005E','Lucía','Martínez Pérez','1998-05-30','600111005','lucia.martinez@example.com',5,'2023-03-11');
+--No socios
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'20000001F','Jorge','Sánchez Vega','1995-08-08','611222001',null,null,null);
+insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'20000002G','Elena','Iglesias Prieto',null,null,'elena.iglesias@example.com',null,null);

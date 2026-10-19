@@ -3,6 +3,7 @@
 drop table if exists Employee;
 drop table if exists Company;
 
+drop table if exists Persona;
 drop table if exists Horario;
 drop table if exists Actividad;
 drop table if exists Instalacion;
@@ -41,4 +42,16 @@ create table Horario (id integer not null primary key, idActividad integer not n
                       diaSemana integer not null, horaInicio varchar(5) not null, horaFin varchar(5) not null,
                       foreign key (idActividad) references Actividad (id),
                       check (diaSemana between 1 and 7), check (horaInicio < horaFin)
+                     );
+
+--HU8: personas (socios y no socios). El DNI se guarda normalizado (mayúsculas, sin espacios ni guiones).
+--Los socios tienen número de socio (secuencial por antigüedad) y fecha de alta como socio;
+--los no socios los tienen a null.
+create table Persona (id integer not null primary key, dni varchar(20) not null unique,
+                      nombre varchar(40) not null, apellidos varchar(80) not null,
+                      fechaNacimiento varchar(10), telefono varchar(20), correo varchar(80),
+                      numSocio integer unique, fechaAltaSocio varchar(10),
+                      check (numSocio is null or numSocio > 0),
+                      check ((numSocio is null) = (fechaAltaSocio is null)),
+                      check (telefono is not null or correo is not null)
                      );

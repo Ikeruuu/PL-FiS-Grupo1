@@ -3,6 +3,7 @@ import logging
 from src.config import DATA_PATH, DB_PATH, SCHEMA_PATH
 from src.employees.employeeView import EmployeeView
 from src.instalaciones.instalacionView import InstalacionView
+from src.personas.personaView import PersonaView
 from src.util.database import Database
 
 logger = logging.getLogger(__name__)
@@ -21,11 +22,13 @@ def main():
     db.executeScript(DATA_PATH)
 
     choices = {"1": EmployeeView().run,
-               "2": InstalacionView().run}
+               "2": InstalacionView().run,
+               "3": PersonaView().run}
     while True:
         print(""" Centro Deportivo Inteligente: \n
               1.- Empleados (ejemplo del profesor) \n
               2.- Instalaciones \n
+              3.- Personas \n
               0.- Salir
               """)
         choice = input("Introducir opción: ")
