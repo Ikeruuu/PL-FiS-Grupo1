@@ -28,9 +28,10 @@ create table Instalacion (id integer not null primary key, nombre varchar(40) no
 
 --Una actividad es una modalidad con un nivel, un periodo (fechas) y un numero de plazas.
 --idInstalacion es null hasta que se asigna (HU3). Una actividad, una instalacion.
-create table Actividad (id integer not null primary key, idModalidad integer not null, idNivel integer not null,
+create table Actividad (id integer not null primary key, idOferta integer not null, idModalidad integer not null, idNivel integer not null,
                         fechaInicio varchar(10) not null, fechaFin varchar(10) not null,
                         plazas integer not null, idInstalacion integer,
+                        foreign key (idOferta) references Oferta(id),
                         foreign key (idModalidad) references Modalidad (id),
                         foreign key (idNivel) references Nivel (id),
                         foreign key (idInstalacion) references Instalacion (id),
@@ -55,3 +56,14 @@ create table Persona (id integer not null primary key, dni varchar(20) not null 
                       check ((numSocio is null) = (fechaAltaSocio is null)),
                       check (telefono is not null or correo is not null)
                      );
+
+-- HU: 
+create table Oferta (
+    id integer not null primary key,
+    curso varchar(20) not null,
+    fechaInicio varchar(10) not null,
+    fechaFin varchar(10) not null,
+    estado varchar(10) not null,
+    check (estado in ('ACTIVA','INACTIVA')),
+    check (fechaInicio < fechaFin)
+);
