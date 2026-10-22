@@ -64,6 +64,13 @@ create table Oferta (
     fechaInicio varchar(10) not null,
     fechaFin varchar(10) not null,
     estado varchar(10) not null,
+
+    inicioInscripcionSocios varchar(10),
+    finInscripcionSocios varchar(10),
+
+    inicioInscripcionNoSocios varchar(10),
+    finInscripcionNoSocios varchar(10),
+
     check (estado in ('ACTIVA','INACTIVA')),
     check (fechaInicio < fechaFin)
 );
