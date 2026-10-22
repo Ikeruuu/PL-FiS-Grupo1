@@ -32,18 +32,21 @@ insert into Instalacion(id,nombre,capacidad) values(3,'Gimnasio',20);
 insert into Instalacion(id,nombre,capacidad) values(4,'Pista de pádel 1',4);
 insert into Instalacion(id,nombre,capacidad) values(5,'Pista de pádel 2',4);
 insert into Instalacion(id,nombre,capacidad) values(6,'Pista de tenis',4);
+-- Oferta 
+insert into Oferta
+values(1,'2026-2027','2026-10-01','2027-06-30','ACTIVA');
 --Actividad (datos de prueba). Las tres primeras ya tienen instalación asignada
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,4,2,'2026-10-01','2027-06-30',4,4);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(2,1,1,'2026-10-01','2027-06-30',20,1);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,2,1,'2026-10-01','2026-12-31',12,2);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(4,4,1,'2026-10-01','2027-06-30',4,null);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(5,4,3,'2026-10-01','2027-06-30',4,null);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(6,2,2,'2027-01-01','2027-06-30',15,null);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(7,3,2,'2026-10-01','2027-06-30',20,null);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(8,5,1,'2026-10-01','2027-06-30',4,null);
---Actividades de la Piscina para la consulta de ocupación (extremos 8:00 y 22:00 y franjas contiguas)
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(9,1,3,'2026-10-01','2027-06-30',15,1);
-insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(10,1,2,'2027-01-01','2027-06-30',20,1);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,1,4,2,'2026-10-01','2027-06-30',4,4);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(2,1,1,1,'2026-10-01','2027-06-30',20,1);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,1,2,1,'2026-10-01','2026-12-31',12,2);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(4,1,4,1,'2026-10-01','2027-06-30',4,null);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(5,1,4,3,'2026-10-01','2027-06-30',4,null);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(6,1,2,2,'2027-01-01','2027-06-30',15,null);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(7,1,3,2,'2026-10-01','2027-06-30',20,null);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(8,1,5,1,'2026-10-01','2027-06-30',4,null);
+--Actividades de la Piscina para la consulta de ocupación
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(9,1,1,3,'2026-10-01','2027-06-30',15,1);
+insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(10,1,1,2,'2027-01-01','2027-06-30',20,1);
 --Horario (1=lunes ... 7=domingo)
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,1,1,'18:00','19:00');
 insert into Horario(id,idActividad,diaSemana,horaInicio,horaFin) values(null,1,3,'18:00','19:00');
