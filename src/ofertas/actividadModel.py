@@ -132,3 +132,15 @@ class ActividadModel:
     def _nombreDia(self, dia):
         return self._DIAS[dia]
 
+    def getActividadesDeOferta(self, idOferta):
+        return self.db.executeQuery(
+            """select a.*, m.nombre as modalidad, n.nombre as nivel
+               from Actividad a
+               join Modalidad m on m.id = a.idModalidad
+               join Nivel n on n.id = a.idNivel
+               where a.idOferta = ? order by a.id""", idOferta)
+
+    def getHorarios(self, idActividad):
+        return self.db.executeQuery(
+            "select diaSemana, horaInicio, horaFin from Horario where idActividad = ? order by diaSemana, horaInicio",
+            idActividad)
