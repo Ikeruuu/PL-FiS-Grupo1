@@ -6,6 +6,8 @@ import logging
 import tkinter as tk
 from tkinter import font as tkfont
 
+from src.gui.paginas import PaginaInscripciones
+from src.inscripciones.inscripcionModel import InscripcionModel
 from src.gui import estilos as e
 from src.gui.paginas import PaginaAsignar, PaginaInicio, PaginaOcupacion, PaginaPersonas, PaginaOfertas
 from src.instalaciones.instalacionModel import InstalacionModel
@@ -14,6 +16,10 @@ from src.personas.personaModel import PersonaModel
 from src.util.unexpectedException import UnexpectedException
 from src.ofertas.ofertaModel import OfertaModel
 from src.ofertas.actividadModel import ActividadModel
+from src.ofertas.consultaOfertaModel import ConsultaOfertaModel
+from src.inscripciones.misInscripcionesModel import MisInscripcionesModel
+from src.inscripciones.cancelacionModel import CancelacionModel
+from src.gui.paginas import PaginaCancelar, PaginaConsultaOferta, PaginaMisInscripciones
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +27,11 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("asignar", "Asignar instalación", PaginaAsignar),
              ("ocupacion", "Ocupación", PaginaOcupacion),
              ("personas", "Personas", PaginaPersonas),
-             ("ofertas", "Ofertas", PaginaOfertas)]
+             ("ofertas", "Ofertas", PaginaOfertas),
+             ("ofertaDisponible", "Oferta disponible", PaginaConsultaOferta),
+             ("inscripciones", "Inscripciones", PaginaInscripciones),
+             ("misInscripciones", "Mis inscripciones", PaginaMisInscripciones),
+             ("cancelar", "Cancelar inscripción", PaginaCancelar)]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -40,6 +50,10 @@ class CentroDeportivoApp(tk.Tk):
         self.personas = PersonaModel(db_path)
         self.ofertas = OfertaModel(db_path)
         self.actividades = ActividadModel(db_path)
+        self.inscripciones = InscripcionModel(db_path)
+        self.consultaOferta = ConsultaOfertaModel(db_path)
+        self.misInscripciones = MisInscripcionesModel(db_path)
+        self.cancelaciones = CancelacionModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)

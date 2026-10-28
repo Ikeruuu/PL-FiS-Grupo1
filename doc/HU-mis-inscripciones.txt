@@ -1,0 +1,22 @@
+Consultar las actividades en las que estoy inscrito (RedKanban 35336)
+=====================================================================
+Responsable: José María García Galán
+Rama: josemaria-consultas-cancelacion
+Respuestas del Product Owner (Claudio de la Riva) incorporadas en la historia.
+
+Descripción: Como socio o no socio del centro deportivo, quiero consultar todas mis inscripciones
+para saber en qué actividades tengo plaza, en cuáles estoy en lista de espera y cuáles he cancelado.
+
+Criterios de aceptación:
+1. El usuario indica su identificador (DNI o número de socio, el mismo en todo el proyecto).
+2. Se listan todas las actividades en las que tiene o ha tenido una inscripción, con modalidad,
+   nivel, horario, instalación y estado: «Inscrito», «Plaza pendiente de aceptar», «En lista de
+   espera (posición 3 de 7)» o «Cancelada» (con el mes desde el que cancela si procede).
+3. Si el identificador no corresponde a nadie: «No existe ninguna persona registrada con ese
+   identificador».
+4. Si la persona no tiene inscripciones: «No está inscrito en ninguna actividad».
+
+Implementación:
+- src/inscripciones/misInscripcionesModel.py: consultarInscripciones(dni, numSocio).
+- src/gui/paginas.py: PaginaMisInscripciones (menú «Mis inscripciones»).
+- test/testMisInscripciones.py y test/testGui.py.

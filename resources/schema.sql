@@ -2,7 +2,7 @@
 
 drop table if exists Employee;
 drop table if exists Company;
-
+drop table if exists Inscripcion;
 drop table if exists Persona;
 drop table if exists Horario;
 drop table if exists Actividad;
@@ -53,11 +53,13 @@ create table Oferta (
 create table Actividad (id integer not null primary key, idOferta integer not null, idModalidad integer not null, idNivel integer not null,
                         fechaInicio varchar(10) not null, fechaFin varchar(10) not null,
                         plazas integer not null, idInstalacion integer,
+                        cuota real,
                         foreign key (idOferta) references Oferta(id),
                         foreign key (idModalidad) references Modalidad (id),
                         foreign key (idNivel) references Nivel (id),
                         foreign key (idInstalacion) references Instalacion (id),
-                        check (plazas > 0), check (fechaInicio <= fechaFin)
+                        check (plazas > 0), check (fechaInicio <= fechaFin),
+                        check (cuota is null or cuota >= 0)
                        );
 
 --Periodicidad semanal de cada actividad: dia de la semana (1=lunes ... 7=domingo) y franja horaria (HH:MM)
@@ -78,4 +80,29 @@ create table Persona (id integer not null primary key, dni varchar(20) not null 
                       check ((numSocio is null) = (fechaAltaSocio is null)),
                       check (telefono is not null or correo is not null)
                      );
+--Inscripciones y solicitudes en lista de espera.
+create table Inscripcion (
+    id integer not null primary key,
+    idPersona integer not null,
+    idActividad integer not null,
+    fechaSolicitud varchar(26) not null,
+    fechaInscripcion varchar(26),
+    estado varchar(20) not null,
 
+    --Cancelación (HU Cancelar una inscripción): fecha en que se cancela y,
+    --si la actividad ya había comenzado, primer día del mes desde el que deja de asistir
+    fechaCancelacion varchar(26),
+    cancelaDesde varchar(10),
+
+    foreign key (idPersona) references Persona(id),
+    foreign key (idActividad) references Actividad(id),
+
+    unique (idPersona, idActividad),
+    check (estado in (
+        'CONFIRMADA',
+        'EN_ESPERA',
+        'PENDIENTE_ACEPTACION',
+        'CANCELADA'
+    )),
+    check (estado != 'CONFIRMADA' or fechaInscripcion is not null)
+);
