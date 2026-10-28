@@ -911,6 +911,24 @@ class PaginaMisInscripciones(Pagina):
         self.aviso = Aviso(self)
         self.aviso.pack(fill="x", pady=(14, 0))
 
+        acciones = ttk.Frame(self)
+        acciones.pack(fill="x", pady=(12, 0))
+
+        ttk.Button(
+            acciones, text="Aceptar plaza",
+            style="Primario.TButton",
+            command=lambda: self.responderPlaza(True)
+        ).pack(side="left")
+
+        ttk.Button(
+            acciones, text="Rechazar plaza",
+            style="Secundario.TButton",
+            command=lambda: self.responderPlaza(False)
+        ).pack(side="left", padx=(12, 0))
+
+        self.solicitudesMostradas = {}
+        self.personaConsultada = None
+
         resultado = tarjeta(self, fill="both", expand=True, pady=(14, 0))
         self.titulo = ttk.Label(resultado, text="Identifícate y pulsa Consultar",
                                 style="Seccion.TLabel")
@@ -929,6 +947,8 @@ class PaginaMisInscripciones(Pagina):
     def consultar(self):
         self.aviso.ocultar()
         self.lista.delete(*self.lista.get_children())
+        self.solicitudesMostradas = {}
+        self.personaConsultada = None
         try:
             persona, lista, mensaje = self.app.misInscripciones.consultarInscripciones(
                 **leerPersona(self.tipoBusqueda, self.identificador))
@@ -937,14 +957,80 @@ class PaginaMisInscripciones(Pagina):
             self.aviso.mostrar(str(error), "error")
             return
         self.titulo.configure(text=f"Inscripciones de {persona['nombre']} {persona['apellidos']}")
+        self.personaConsultada = {"dni": persona["dni"]}
         if mensaje:
             self.aviso.mostrar(mensaje, "info")
             return
         for f in lista:
+            self.solicitudesMostradas[str(f["idInscripcion"])] = dict(f)
             self.lista.insert("", "end", iid=str(f["idInscripcion"]), values=(
                 f"{f['modalidad']} {f['nivel'].lower()}", f["horario"], f["instalacion"],
                 f"{fechaCorta(f['fechaInicio'])} – {fechaCorta(f['fechaFin'])}",
                 f["descripcionEstado"]), tags=(f["estado"],))
+    def responderPlaza(self, aceptar):
+        seleccion = self.lista.selection()
+        if not seleccion or self.personaConsultada is None:
+            self.aviso.mostrar(
+                "Consulta tus inscripciones y selecciona una actividad",
+                "info"
+            )
+            return
+
+        try:
+            identidad = leerPersona(
+                self.tipoBusqueda, self.identificador
+            )
+            personaActual = self.app.listaEspera.consultarEstado(
+                self.solicitudesMostradas[seleccion[0]]["idActividad"],
+                **identidad
+            )["persona"]
+        except (IdentificacionError, ValidationError) as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+
+        if personaActual["dni"] != self.personaConsultada["dni"]:
+            self.aviso.mostrar(
+                "Has cambiado de persona. Pulsa Consultar de nuevo",
+                "info"
+            )
+            return
+
+        solicitud = self.solicitudesMostradas[seleccion[0]]
+        if solicitud["estado"] != "PENDIENTE_ACEPTACION":
+            self.aviso.mostrar(
+                "La solicitud seleccionada no tiene "
+                "una plaza pendiente de aceptar",
+                "info"
+            )
+            return
+
+        texto = (
+            "¿Quieres aceptar la plaza y confirmar tu inscripción?"
+            if aceptar else
+            "¿Quieres rechazar la plaza? Saldrás de la lista "
+            "de esta actividad y se ofrecerá al siguiente."
+        )
+        if not messagebox.askyesno(
+            "Confirmar respuesta", texto, parent=self
+        ):
+            return
+
+        try:
+            metodo = (
+                self.app.listaEspera.aceptarPlaza
+                if aceptar else
+                self.app.listaEspera.rechazarPlaza
+            )
+            mensaje = metodo(
+                solicitud["idActividad"],
+                **self.personaConsultada
+            )
+        except IdentificacionError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+
+        self.consultar()
+        self.aviso.mostrar(mensaje, "ok")
 
 
 class PaginaCancelar(Pagina):
