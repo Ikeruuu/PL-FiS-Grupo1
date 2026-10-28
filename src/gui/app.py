@@ -118,3 +118,17 @@ class CentroDeportivoApp(tk.Tk):
 def ejecutar(db_path=None):
     app = CentroDeportivoApp(db_path)
     app.mainloop()
+
+if __name__ == '__main__':
+    from src.config import SCHEMA_PATH, DATA_PATH
+    from src.util.database import Database
+
+    db_path = "database.db"
+    
+    # Inicializar la base de datos con las tablas y datos de prueba
+    db = Database(db_path)
+    db.executeScript(SCHEMA_PATH)
+    db.executeScript(DATA_PATH)
+
+    # Iniciar la aplicación
+    ejecutar(db_path)
