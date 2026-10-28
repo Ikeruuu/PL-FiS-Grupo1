@@ -6,9 +6,11 @@ drop table if exists Company;
 drop table if exists Persona;
 drop table if exists Horario;
 drop table if exists Actividad;
+drop table if exists Oferta;
 drop table if exists Instalacion;
 drop table if exists Nivel;
 drop table if exists Modalidad;
+
 
 create table Company (id integer not null primary key, id2 integer, name varchar(32), startDate varchar(10));
 create table Employee (id integer primary key,  name varchar(32),
@@ -25,6 +27,19 @@ create table Nivel (id integer not null primary key, nombre varchar(20) not null
 create table Instalacion (id integer not null primary key, nombre varchar(40) not null unique,
                           capacidad integer not null, check (capacidad > 0)
                          );
+
+
+-- HU: 
+create table Oferta (
+    id integer not null primary key,
+    curso varchar(20) not null,
+    fechaInicio varchar(10) not null,
+    fechaFin varchar(10) not null,
+    estado varchar(10) not null,
+    check (estado in ('ACTIVA','INACTIVA')),
+    check (fechaInicio < fechaFin)
+);
+
 
 --Una actividad es una modalidad con un nivel, un periodo (fechas) y un numero de plazas.
 --idInstalacion es null hasta que se asigna (HU3). Una actividad, una instalacion.
@@ -57,13 +72,3 @@ create table Persona (id integer not null primary key, dni varchar(20) not null 
                       check (telefono is not null or correo is not null)
                      );
 
--- HU: 
-create table Oferta (
-    id integer not null primary key,
-    curso varchar(20) not null,
-    fechaInicio varchar(10) not null,
-    fechaFin varchar(10) not null,
-    estado varchar(10) not null,
-    check (estado in ('ACTIVA','INACTIVA')),
-    check (fechaInicio < fechaFin)
-);
