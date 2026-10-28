@@ -131,3 +131,4 @@ class ActividadModel:
 
     def _nombreDia(self, dia):
         return self._DIAS[dia]
+
