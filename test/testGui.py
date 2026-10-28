@@ -6,32 +6,68 @@ from unittest import mock
 from src.config import DATA_PATH, SCHEMA_PATH
 from src.util.database import Database
 
-#Las pruebas de la interfaz gráfica se saltan si no hay Tkinter o no hay pantalla disponible
+#Las pruebas de la interfaz gráfica da erro si esta no se puede abrir 
 try:
     import tkinter
-    from src.gui.app import CentroDeportivoApp
-    _raiz = tkinter.Tk()
-    _raiz.destroy()
+    from src.gui.app import CentroDeportivoApp, SECCIONES
     HAY_TK = True
-except Exception:
+except ImportError:
     HAY_TK = False
 
 
 @unittest.skipUnless(HAY_TK, "Tkinter o pantalla no disponibles")
 class TestGui(unittest.TestCase):
 
-    def setUp(self):
-        self.tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        self.tmp.close()
-        db = Database(self.tmp.name)
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        tmp = tempfile.NamedTemporaryFile(
+            suffix=".db", delete=False
+        )
+        tmp.close()
+        cls.db_path = tmp.name
+        cls.addClassCleanup(os.unlink, cls.db_path)
+
+        db = Database(cls.db_path)
         db.executeScript(SCHEMA_PATH)
         db.executeScript(DATA_PATH)
-        self.app = CentroDeportivoApp(self.tmp.name)
-        self.app.withdraw()
 
-    def tearDown(self):
-        self.app.destroy()
-        os.unlink(self.tmp.name)
+        cls.app = CentroDeportivoApp(cls.db_path)
+        cls.addClassCleanup(cls.app.destroy)
+        cls.app.withdraw()
+        cls.app.update_idletasks()
+
+    def setUp(self):
+        #Procesa los eventos de la prueba anterior antes de limpiar.
+        self.app.update()
+
+        #Destruye las páginas, conservando la ventana raíz.
+        for pagina in self.app.paginas.values():
+            pagina.destroy()
+
+        #Cada prueba empieza con los mismos datos iniciales.
+        db = Database(self.db_path)
+        db.executeScript(SCHEMA_PATH)
+        db.executeScript(DATA_PATH)
+
+        #Recrea los formularios para no conservar entradas,
+        #selecciones ni mensajes de pruebas anteriores.
+        self.app.paginas = {
+            clave: clase(self.app.contenido, self.app)
+            for clave, _, clase in SECCIONES
+        }
+
+        for boton in self.app.botones.values():
+            boton.configure(
+                bg="#0B1F33",
+                fg="#C7D2E0",
+                font=boton.cget("font")
+            )
+
+        self.app.actual = None
+        self.app.mostrar("inicio")
+        self.app.update_idletasks()
 
     def testInicioMuestraResumen(self):
         valores = self.app.paginas["inicio"].valores
