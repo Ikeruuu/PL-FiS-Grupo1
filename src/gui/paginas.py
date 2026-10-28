@@ -5,6 +5,7 @@ de modo que las reglas de las historias de usuario están en un único sitio.
 import tkinter as tk
 from tkinter import ttk
 
+from src.inscripciones.inscripcionModel import InscripcionError
 from src.ofertas.actividadModel import ActividadError
 from src.ofertas.ofertaModel import OfertaError
 from src.gui import estilos as e
@@ -580,3 +581,159 @@ class PaginaOfertas(Pagina):
             return
         self.refrescar()
         self.aviso.mostrar(mensaje, "ok")
+#--------------------------------------------------------------------------------------------
+class PaginaInscripciones(Pagina):
+    """Inscribir una persona registrada en una actividad."""
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(
+            self,
+            "Inscripciones",
+            "Identifica a la persona y selecciona la actividad"
+        )
+
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(0, 14))
+
+        formulario = tarjeta(self, fill="x")
+
+        self.tipoBusqueda = tk.StringVar(value="dni")
+        radios = tk.Frame(formulario, bg=e.TARJETA)
+        radios.pack(anchor="w")
+
+        ttk.Radiobutton(
+            radios, text="DNI", value="dni",
+            variable=self.tipoBusqueda
+        ).pack(side="left")
+
+        ttk.Radiobutton(
+            radios, text="Número de socio", value="socio",
+            variable=self.tipoBusqueda
+        ).pack(side="left", padx=(14, 0))
+
+        self.identificador = campo(
+            formulario, "DNI o número de socio"
+        )
+
+        self.infoPeriodos = tk.Label(
+            formulario, text="", bg=e.TARJETA,
+            fg=e.TEXTO_SUAVE, justify="left",
+            anchor="w", font=e.fuente(9)
+        )
+        self.infoPeriodos.pack(anchor="w", pady=(12, 0))
+
+        ttk.Button(
+            self, text="Inscribir",
+            style="Primario.TButton",
+            command=self.inscribir
+        ).pack(anchor="e", pady=(14, 0))
+
+        actividades = tarjeta(
+            self, fill="both", expand=True, pady=(14, 0)
+        )
+        ttk.Label(
+            actividades, text="Selecciona una actividad",
+            style="Seccion.TLabel"
+        ).pack(anchor="w", pady=(0, 10))
+
+        marco, self.tablaActividades = tabla(actividades, [
+            ("id", "ID", 40, False),
+            ("actividad", "Actividad", 180, True),
+            ("plazas", "Plazas totales", 100, False),
+            ("horario", "Horario", 220, True),
+            ("periodo", "Periodo", 180, False),
+        ])
+        marco.pack(fill="both", expand=True)
+
+    def refrescar(self):
+        self.aviso.ocultar()
+        self.tablaActividades.delete(
+            *self.tablaActividades.get_children()
+        )
+
+        oferta = self.app.ofertas.getOfertaActiva()
+        if oferta is None:
+            self.infoPeriodos.configure(text="No hay oferta activa")
+            self.aviso.mostrar("No hay oferta activa", "info")
+            return
+
+        self.infoPeriodos.configure(
+            text=(
+                "Periodo de socios: "
+                f"{oferta['inicioInscripcionSocios'] or 'sin definir'}"
+                " a "
+                f"{oferta['finInscripcionSocios'] or 'sin definir'}"
+                "\nPeriodo de no socios: "
+                f"{oferta['inicioInscripcionNoSocios'] or 'sin definir'}"
+                " a "
+                f"{oferta['finInscripcionNoSocios'] or 'sin definir'}"
+            )
+        )
+
+        actividades = self.app.actividades.getActividadesDeOferta(
+            oferta["id"]
+        )
+        for actividad in actividades:
+            horarios = self.app.actividades.getHorarios(
+                actividad["id"]
+            )
+            horario = ", ".join(
+                describirFranja(h) for h in horarios
+            ) or "Sin horario"
+
+            self.tablaActividades.insert(
+                "", "end", iid=str(actividad["id"]),
+                values=(
+                    actividad["id"],
+                    describirActividad(actividad),
+                    actividad["plazas"],
+                    horario,
+                    f"{fechaCorta(actividad['fechaInicio'])} – "
+                    f"{fechaCorta(actividad['fechaFin'])}",
+                )
+            )
+
+        if not actividades:
+            self.aviso.mostrar(
+                "La oferta no tiene actividades", "info"
+            )
+
+    def inscribir(self):
+        seleccion = self.tablaActividades.selection()
+        if not seleccion:
+            self.aviso.mostrar(
+                "Selecciona una actividad", "info"
+            )
+            return
+
+        identificador = self.identificador.get().strip()
+        if not identificador:
+            self.aviso.mostrar(
+                "Indica el DNI o el número de socio", "info"
+            )
+            return
+
+        try:
+            argumentos = {}
+            if self.tipoBusqueda.get() == "dni":
+                argumentos["dni"] = identificador
+            else:
+                argumentos["numSocio"] = validate_positive_int(
+                    identificador
+                )
+
+            mensaje = self.app.inscripciones.inscribir(
+                int(seleccion[0]), **argumentos
+            )
+        except (InscripcionError, ValidationError) as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+
+        actividad = self.tablaActividades.item(
+            seleccion[0], "values"
+        )[1]
+        tipo = "info" if "lista de espera" in mensaje else "ok"
+        self.aviso.mostrar(
+            f"{mensaje}. Actividad: {actividad}", tipo
+        )

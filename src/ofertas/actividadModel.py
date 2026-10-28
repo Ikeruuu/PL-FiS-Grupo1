@@ -1,5 +1,5 @@
 from src.util.database import Database
-
+from src.config import DB_PATH
 
 class ActividadError(Exception):
     pass
@@ -13,7 +13,7 @@ class ActividadModel:
     NIVELES = {1: 'Iniciación', 2: 'Medio', 3: 'Avanzado'}
 
     def __init__(self, db_path=None):
-        self.db = Database(db_path) if db_path else Database()
+        self.db = Database(DB_PATH if db_path is None else db_path)
 
     #HU3: añade una actividad a la oferta actual, con su periodicidad (horarios) y plazas.
     #horarios es una lista de tuplas (diaSemana, horaInicio, horaFin).
