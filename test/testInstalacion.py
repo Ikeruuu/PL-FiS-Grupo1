@@ -19,8 +19,9 @@ TEST_DATA = """
     insert into Instalacion(id,nombre,capacidad) values(1,'Pista de pádel 1',4);
     insert into Instalacion(id,nombre,capacidad) values(2,'Sala polivalente',15);
     insert into Instalacion(id,nombre,capacidad) values(3,'Pista de pádel 2',4);
-    insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,1,2,'2026-10-01','2027-06-30',4,1);
-    insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,2,1,'2026-10-01','2026-12-31',12,2);
+    insert into Oferta(id,curso,fechaInicio,fechaFin,estado) values(1,'2026-2027','2026-10-01','2027-06-30','ACTIVA');
+    insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,1,1,2,'2026-10-01','2027-06-30',4,1);
+    insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,1,2,1,'2026-10-01','2026-12-31',12,2);
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(1,1,'18:00','19:00');
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(3,1,'09:00','10:00');
 """
@@ -170,8 +171,8 @@ class TestInstalacion(unittest.TestCase):
     def testVistaSinInstalaciones(self):
         self.db.executeScriptBatch(
             "delete from Horario; delete from Actividad; delete from Instalacion;"
-            "insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas) "
-            "values(10,1,1,'2026-10-01','2027-06-30',4);")
+            "insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas) "
+            "values(10,1,1,1,'2026-10-01','2027-06-30',4);")
         view = InstalacionView(self.model)
         with patch("builtins.print") as mock_print:
             view.asignarInstalacion()
@@ -195,6 +196,15 @@ class TestInstalacion(unittest.TestCase):
             view.asignarInstalacion()
         self.assertIsNone(self.instalacionDe(10))
 
+    def nuevaActividad(self, id, dia, inicio, fin, plazas=4, fechaInicio='2026-10-01',
+                       fechaFin='2027-06-30', modalidad=1, nivel=1):
+        self.db.executeUpdateQuery(
+            "insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas) values(?,?,?,?,?,?,?)",
+            id, 1, modalidad, nivel, fechaInicio, fechaFin, plazas)
+        self.db.executeUpdateQuery(
+            "insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(?,?,?,?)",
+            id, dia, inicio, fin)
+        return id
 
 if __name__ == '__main__':
     unittest.main()

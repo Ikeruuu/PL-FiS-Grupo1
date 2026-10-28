@@ -24,9 +24,10 @@ TEST_DATA = """
     insert into Nivel(id,nombre) values(2,'Medio');
     insert into Instalacion(id,nombre,capacidad) values(1,'Piscina',25);
     insert into Instalacion(id,nombre,capacidad) values(2,'Gimnasio',20);
-    insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,1,1,'2026-10-01','2027-06-30',10,1);
-    insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(2,1,2,'2027-01-01','2027-06-30',10,1);
-    insert into Actividad(id,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,1,2,'2026-10-01','2027-06-30',10,null);
+    insert into Oferta(id,curso,fechaInicio,fechaFin,estado) values(1,'2026-2027','2026-10-01','2027-06-30','ACTIVA');
+    insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,1,1,1,'2026-10-01','2027-06-30',10,1);
+    insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(2,1,1,2,'2027-01-01','2027-06-30',10,1);
+    insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,1,1,2,'2026-10-01','2027-06-30',10,null);
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(1,1,'08:00','09:00');
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(1,1,'21:00','22:00');
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(1,2,'10:00','11:00');
