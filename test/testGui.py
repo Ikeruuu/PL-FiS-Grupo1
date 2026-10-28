@@ -6,7 +6,7 @@ from unittest import mock
 from src.config import DATA_PATH, SCHEMA_PATH
 from src.util.database import Database
 
-#Las pruebas de la interfaz gráfica se saltan si no hay Tkinter o no hay pantalla disponible
+#Las pruebas de la interfaz gráfica da erro si esta no se puede abrir 
 try:
     import tkinter
     from src.gui.app import CentroDeportivoApp, SECCIONES
