@@ -33,7 +33,7 @@ insert into Instalacion(id,nombre,capacidad) values(4,'Pista de pádel 1',4);
 insert into Instalacion(id,nombre,capacidad) values(5,'Pista de pádel 2',4);
 insert into Instalacion(id,nombre,capacidad) values(6,'Pista de tenis',4);
 -- Oferta 
-insert into Oferta
+insert into Oferta (id,curso,fechaInicio,fechaFin,estado)
 values(1,'2026-2027','2026-10-01','2027-06-30','ACTIVA');
 --Actividad (datos de prueba). Las tres primeras ya tienen instalación asignada
 insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(1,1,4,2,'2026-10-01','2027-06-30',4,4);
