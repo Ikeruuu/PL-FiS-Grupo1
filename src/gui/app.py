@@ -7,18 +7,21 @@ import tkinter as tk
 from tkinter import font as tkfont
 
 from src.gui import estilos as e
-from src.gui.paginas import PaginaAsignar, PaginaInicio, PaginaOcupacion, PaginaPersonas
+from src.gui.paginas import PaginaAsignar, PaginaInicio, PaginaOcupacion, PaginaPersonas, PaginaOfertas
 from src.instalaciones.instalacionModel import InstalacionModel
 from src.instalaciones.ocupacionModel import OcupacionModel
 from src.personas.personaModel import PersonaModel
 from src.util.unexpectedException import UnexpectedException
+from src.ofertas.ofertaModel import OfertaModel
+from src.ofertas.actividadModel import ActividadModel
 
 logger = logging.getLogger(__name__)
 
 SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("asignar", "Asignar instalación", PaginaAsignar),
              ("ocupacion", "Ocupación", PaginaOcupacion),
-             ("personas", "Personas", PaginaPersonas)]
+             ("personas", "Personas", PaginaPersonas),
+             ("ofertas", "Ofertas", PaginaOfertas)]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -34,6 +37,8 @@ class CentroDeportivoApp(tk.Tk):
         self.instalaciones = InstalacionModel(db_path)
         self.ocupacion = OcupacionModel(db_path)
         self.personas = PersonaModel(db_path)
+        self.ofertas = OfertaModel(db_path)
+        self.actividades = ActividadModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
