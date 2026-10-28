@@ -1,0 +1,37 @@
+Cancelar una inscripción en una actividad (RedKanban 35335)
+===========================================================
+Responsable: José María García Galán
+Rama: josemaria-consultas-cancelacion
+Respuestas del Product Owner (Claudio de la Riva) incorporadas en la historia.
+
+Descripción: Como socio o no socio del centro deportivo, quiero cancelar mi inscripción en una
+actividad para liberar la plaza cuando ya no pueda asistir.
+
+Criterios de aceptación:
+1. Entrada: identificador de la persona (DNI o número de socio, como en la inscripción), la
+   actividad y, si la actividad ya ha comenzado, el mes a partir del cual cancela (AAAA-MM).
+2. Si la actividad aún no ha comenzado, se cancela en cualquier momento.
+3. Si ya ha comenzado, se cancela a partir de un mes y la solicitud se hace entre el 1 y el 15 del
+   mes anterior (para diciembre, del 1 al 15 de noviembre). Si no: «Fuera de plazo: para cancelar a
+   partir de diciembre de 2026 la solicitud debe hacerse entre el 1 y el 15 de noviembre de 2026».
+   Una actividad terminada no se puede cancelar.
+4. Antes de cancelar se pide confirmación. Al confirmar, la inscripción queda en estado CANCELADA
+   (no se borra; se guardan fechaCancelacion y, en su caso, cancelaDesde) y se muestra un mensaje.
+5. Una solicitud en lista de espera se puede retirar en cualquier momento; las posiciones de los
+   demás se recalculan (la posición se calcula a partir de la lista, no se guarda).
+6. Si no hay inscripción ni solicitud de esa persona en la actividad, se indica con un mensaje.
+7. Cuando se libera una plaza y hay lista de espera, la primera persona (socios primero y, entre
+   iguales, por orden de llegada) pasa a tener la plaza en estado PENDIENTE_ACEPTACION. Aceptarla
+   o rechazarla es la HU de lista de espera (35326). Las canceladas no ocupan plaza.
+8. En este sprint no se contemplan pagos ni devoluciones.
+
+Simplificación: al cancelar una actividad ya comenzada a partir de un mes, la plaza se libera en el
+momento de la cancelación (queda registrado desde qué mes deja de asistir en cancelaDesde).
+
+Implementación:
+- resources/schema.sql: columnas fechaCancelacion y cancelaDesde en Inscripcion.
+- src/inscripciones/cancelacionModel.py: comprobarCancelacion (para la confirmación) y cancelar.
+- src/inscripciones/comun.py: identificación de la persona, plazas ocupadas y orden de la lista de
+  espera (reutilizable por las demás historias de inscripciones).
+- src/gui/paginas.py: PaginaCancelar (menú «Cancelar inscripción»).
+- test/testCancelacion.py y test/testGui.py.

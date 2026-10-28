@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from src.config import DATA_PATH, SCHEMA_PATH
 from src.util.database import Database
@@ -51,7 +52,8 @@ class TestGui(unittest.TestCase):
             self.assertLessEqual(boton.winfo_reqwidth(), ancho, boton.cget("text"))
 
     def testNavegacion(self):
-        for clave in ("asignar", "ocupacion", "personas", "inicio"):
+        for clave in ("asignar", "ocupacion", "personas", "ofertaDisponible", "misInscripciones",
+                      "cancelar", "inicio"):
             self.app.mostrar(clave)
             self.assertEqual(self.app.actual, clave)
 
@@ -171,6 +173,91 @@ class TestGui(unittest.TestCase):
         p.plazas.insert(0, "15")
         p.guardar()
         self.assertEqual(p.aviso.tipo, "ok")
+
+    #---- HU 35334 / 35335 / 35336 (José María) ----
+    def _periodos(self):
+        self.app.ofertas.db.executeUpdateQuery(
+            """update Oferta set inicioInscripcionSocios = '2026-09-01',
+                   finInscripcionSocios = '2026-09-15', inicioInscripcionNoSocios = '2026-09-16',
+                   finInscripcionNoSocios = '2026-09-30' where id = 1""")
+
+    def _solicitud(self, idPersona, idActividad, estado, fecha="2026-09-02T10:00:00"):
+        self.app.ofertas.db.executeUpdateQuery(
+            """insert into Inscripcion (idPersona, idActividad, fechaSolicitud, fechaInscripcion,
+               estado) values (?, ?, ?, ?, ?)""",
+            idPersona, idActividad, fecha, fecha if estado == "CONFIRMADA" else None, estado)
+
+    def testConsultaOfertaConFiltros(self):
+        self._periodos()
+        self.app.mostrar("ofertaDisponible")
+        p = self.app.paginas["ofertaDisponible"]
+        p.fecha.delete(0, "end")
+        p.fecha.insert(0, "2026-09-10")
+        p.consultar()
+        self.assertEqual(len(p.lista.get_children()), 10)
+        p.modalidad.current(4)   #Pádel
+        p.consultar()
+        self.assertEqual(sorted(p.lista.get_children(), key=int), ["1", "4", "5"])
+        valores = p.lista.item("1", "values")
+        self.assertEqual(valores[1], "lunes y miércoles")
+        self.assertEqual(valores[4], "30,00 €")
+        self.assertEqual(valores[6], "Socios")
+        p.modalidad.current(5)   #Tenis
+        p.nivel.current(3)       #Avanzado
+        p.consultar()
+        self.assertEqual(p.aviso.mensaje,
+                         "Ninguna actividad abierta a inscripción cumple los filtros indicados")
+
+    def testConsultaOfertaFueraDePlazo(self):
+        self.app.mostrar("ofertaDisponible")
+        p = self.app.paginas["ofertaDisponible"]
+        p.consultar()
+        self.assertEqual(p.aviso.mensaje, "No hay actividades abiertas a inscripción en este momento")
+
+    def testMisInscripciones(self):
+        self._solicitud(1, 1, "CONFIRMADA")
+        self._solicitud(2, 4, "CONFIRMADA")
+        self._solicitud(1, 4, "EN_ESPERA", "2026-09-03T10:00:00")
+        self.app.mostrar("misInscripciones")
+        p = self.app.paginas["misInscripciones"]
+        p.identificador.insert(0, "10000001A")
+        p.consultar()
+        estados = [p.lista.item(i, "values")[4] for i in p.lista.get_children()]
+        self.assertEqual(estados, ["Inscrito", "En lista de espera (posición 1 de 1)"])
+        p.identificador.delete(0, "end")
+        p.identificador.insert(0, "20000002G")
+        p.consultar()
+        self.assertEqual(p.aviso.mensaje, "No está inscrito en ninguna actividad")
+        p.identificador.delete(0, "end")
+        p.identificador.insert(0, "NOEXISTE")
+        p.consultar()
+        self.assertEqual(p.aviso.tipo, "error")
+
+    def testCancelarConConfirmacion(self):
+        self._solicitud(1, 1, "CONFIRMADA")
+        self.app.mostrar("cancelar")
+        p = self.app.paginas["cancelar"]
+        p.identificador.insert(0, "10000001A")
+        p.buscar()
+        p.lista.selection_set("1")
+        p.fecha.delete(0, "end")
+        p.fecha.insert(0, "2026-11-20")
+        p.mes.insert(0, "2026-12")
+        p.cancelar()
+        self.assertIn("Fuera de plazo", p.aviso.mensaje)
+        p.fecha.delete(0, "end")
+        p.fecha.insert(0, "2026-11-05")
+        p.lista.selection_set("1")
+        with mock.patch("src.gui.paginas.messagebox.askyesno", return_value=False):
+            p.cancelar()
+        self.assertEqual(p.aviso.mensaje, "Cancelación anulada; no se ha modificado nada")
+        p.lista.selection_set("1")
+        with mock.patch("src.gui.paginas.messagebox.askyesno", return_value=True) as pregunta:
+            p.cancelar()
+        self.assertIn("Se cancelará la inscripción en Pádel medio a partir de diciembre de 2026",
+                      pregunta.call_args[0][1])
+        self.assertEqual(p.aviso.tipo, "ok")
+        self.assertEqual(p.lista.get_children(), ())
 
 if __name__ == '__main__':
     unittest.main()
