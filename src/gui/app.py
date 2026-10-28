@@ -6,6 +6,8 @@ import logging
 import tkinter as tk
 from tkinter import font as tkfont
 
+from src.gui.paginas import PaginaConsultaInscritos
+from src.inscripciones.consultaInscritosModel import ConsultaInscritosModel
 from src.inscripciones.listaEsperaModel import ListaEsperaModel
 from src.gui.paginas import PaginaInscripciones
 from src.inscripciones.inscripcionModel import InscripcionModel
@@ -32,7 +34,8 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("ofertaDisponible", "Oferta disponible", PaginaConsultaOferta),
              ("inscripciones", "Inscripciones", PaginaInscripciones),
              ("misInscripciones", "Mis inscripciones", PaginaMisInscripciones),
-             ("cancelar", "Cancelar inscripción", PaginaCancelar)]
+             ("cancelar", " Cancelar inscripción", PaginaCancelar),
+             ("consultaInscritos", "Inscritos por actividad", PaginaConsultaInscritos)]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -56,6 +59,7 @@ class CentroDeportivoApp(tk.Tk):
         self.misInscripciones = MisInscripcionesModel(db_path)
         self.cancelaciones = CancelacionModel(db_path)
         self.listaEspera = ListaEsperaModel(db_path)
+        self.consultaInscritos = ConsultaInscritosModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)

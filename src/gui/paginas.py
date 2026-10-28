@@ -6,6 +6,7 @@ import tkinter as tk
 from datetime import date
 from tkinter import messagebox, ttk
 
+from src.inscripciones.consultaInscritosModel import ConsultaInscritosError
 from src.inscripciones.comun import IdentificacionError, describirDias
 from src.inscripciones.inscripcionModel import InscripcionError
 from src.ofertas.actividadModel import ActividadModel
@@ -1127,3 +1128,180 @@ class PaginaCancelar(Pagina):
         self.mes.delete(0, "end")
         self.buscar(ocultarAviso=False)
         self.aviso.mostrar(mensaje, "ok")
+
+
+class PaginaConsultaInscritos(Pagina):
+    """Consulta de participantes confirmados para administración."""
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(
+            self,
+            "Inscritos por actividad",
+            "Consulta los participantes confirmados y las plazas"
+        )
+
+        filtros = tarjeta(self, fill="x")
+        ttk.Label(
+            filtros, text="Actividad",
+            style="Campo.TLabel"
+        ).pack(anchor="w")
+
+        fila = tk.Frame(filtros, bg=e.TARJETA)
+        fila.pack(fill="x", pady=(6, 0))
+
+        self.combo = ttk.Combobox(fila, state="readonly")
+        self.combo.pack(
+            side="left", fill="x", expand=True, padx=(0, 12)
+        )
+        ttk.Button(
+            fila, text="Consultar",
+            style="Primario.TButton",
+            command=self.consultar
+        ).pack(side="right")
+
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(14, 0))
+
+        resumen = tarjeta(self, fill="x", pady=(14, 0))
+        self.detalle = tk.Label(
+            resumen, text="Selecciona una actividad",
+            bg=e.TARJETA, fg=e.TEXTO_SUAVE,
+            justify="left", anchor="w"
+        )
+        self.detalle.pack(fill="x")
+        self.detalle.bind(
+            "<Configure>",
+            lambda ev: self.detalle.configure(
+                wraplength=max(200, ev.width - 10)
+            )
+        )
+
+        self.plazas = tk.Label(
+            resumen, text="", bg=e.TARJETA,
+            fg=e.TEXTO, font=e.fuente(10, "bold"),
+            justify="left", anchor="w"
+        )
+        self.plazas.pack(fill="x", pady=(10, 0))
+        self.plazas.bind(
+            "<Configure>",
+            lambda ev: self.plazas.configure(
+                wraplength=max(200, ev.width - 10)
+            )
+        )
+
+        resultado = tarjeta(
+            self, fill="both", expand=True, pady=(14, 0)
+        )
+        ttk.Label(
+            resultado, text="Participantes confirmados",
+            style="Seccion.TLabel"
+        ).pack(anchor="w", pady=(0, 10))
+
+        marco, self.lista = tabla(resultado, [
+            ("dni", "DNI", 110, False),
+            ("nombre", "Nombre y apellidos", 260, True),
+            ("tipo", "Socio / no socio", 140, False),
+            ("fecha", "Fecha de inscripción", 180, True),
+        ])
+        marco.pack(fill="both", expand=True)
+
+        self.actividades = []
+
+    def refrescar(self):
+        self.aviso.ocultar()
+        self.lista.delete(*self.lista.get_children())
+        self.detalle.configure(text="Selecciona una actividad")
+        self.plazas.configure(text="")
+
+        anterior = self.combo.get()
+        self.actividades = []
+        oferta = self.app.ofertas.getOfertaActiva()
+
+        if oferta is not None:
+            self.actividades = (
+                self.app.actividades.getActividadesDeOferta(
+                    oferta["id"]
+                )
+            )
+
+        valores = [
+            f"{a['id']} · {a['modalidad']} "
+            f"{a['nivel'].lower()} · "
+            f"{a['fechaInicio']} a {a['fechaFin']}"
+            for a in self.actividades
+        ]
+        self.combo["values"] = valores
+        self.combo.set("")
+
+        if anterior in valores:
+            self.combo.current(valores.index(anterior))
+        elif valores:
+            self.combo.current(0)
+        else:
+            self.aviso.mostrar(
+                "No hay actividades en la oferta activa", "info"
+            )
+
+    def consultar(self):
+        self.aviso.ocultar()
+        self.lista.delete(*self.lista.get_children())
+        self.detalle.configure(text="Selecciona una actividad")
+        self.plazas.configure(text="")
+
+        indice = self.combo.current()
+        if indice < 0:
+            self.aviso.mostrar("Selecciona una actividad", "info")
+            return
+
+        try:
+            resultado = self.app.consultaInscritos.consultarInscritos(
+                self.actividades[indice]["id"]
+            )
+        except ConsultaInscritosError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+
+        actividad = resultado["actividad"]
+        self.detalle.configure(
+            text=(
+                f"{actividad['modalidad']} "
+                f"{actividad['nivel'].lower()}\n"
+                f"Horario: {resultado['horario']}\n"
+                f"Periodo: {actividad['fechaInicio']} "
+                f"a {actividad['fechaFin']}"
+            )
+        )
+        self.plazas.configure(
+            text=(
+                f"Totales: {resultado['plazasTotales']} · "
+                f"Ocupadas por inscritos: "
+                f"{resultado['plazasOcupadas']} · "
+                f"Reservadas pendientes de aceptar: "
+                f"{resultado['plazasReservadas']} · "
+                f"Disponibles: {resultado['plazasDisponibles']}"
+            )
+        )
+
+        for persona in resultado["inscritos"]:
+            fecha = persona["fechaInscripcion"]
+            fechaVisible = fechaCorta(fecha[:10])
+            if "T" in fecha:
+                fechaVisible += " " + fecha[11:19]
+
+            self.lista.insert(
+                "", "end",
+                values=(
+                    persona["dni"],
+                    f"{persona['nombre']} {persona['apellidos']}",
+                    "Socio" if persona["numSocio"] is not None
+                    else "No socio",
+                    fechaVisible,
+                )
+            )
+
+        if not resultado["inscritos"]:
+            self.aviso.mostrar(
+                "La actividad no tiene inscritos confirmados",
+                "info"
+            )
