@@ -29,13 +29,20 @@ create table Instalacion (id integer not null primary key, nombre varchar(40) no
                          );
 
 
--- HU: 
+-- Oferta de actividades de un curso
 create table Oferta (
     id integer not null primary key,
     curso varchar(20) not null,
     fechaInicio varchar(10) not null,
     fechaFin varchar(10) not null,
     estado varchar(10) not null,
+
+    inicioInscripcionSocios varchar(10),
+    finInscripcionSocios varchar(10),
+
+    inicioInscripcionNoSocios varchar(10),
+    finInscripcionNoSocios varchar(10),
+
     check (estado in ('ACTIVA','INACTIVA')),
     check (fechaInicio < fechaFin)
 );
