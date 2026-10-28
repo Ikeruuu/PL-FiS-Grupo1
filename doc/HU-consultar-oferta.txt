@@ -1,0 +1,31 @@
+Consultar la oferta de actividades disponibles (RedKanban 35334)
+=================================================================
+Responsable: José María García Galán
+Rama: josemaria-consultas-cancelacion
+Respuestas del Product Owner (Claudio de la Riva) incorporadas en la historia.
+
+Descripción: Como socio o no socio del centro deportivo, quiero consultar las actividades abiertas
+a inscripción para elegir en cuál apuntarme según la modalidad, el nivel y la periodicidad.
+
+Criterios de aceptación:
+1. Filtros opcionales por modalidad, nivel y periodicidad (conjunto de días de la semana en que se
+   imparte la actividad, p. ej. «lunes y miércoles»). Sin filtros se muestran todas.
+2. Para cada actividad: modalidad, nivel, periodicidad y horario, instalación asignada, cuota,
+   plazas libres y para quién está abierta la inscripción (socios, no socios o ambos).
+3. Aparecen todas las actividades de la oferta activa con algún periodo de inscripción abierto
+   (el de socios o el de no socios) en la fecha de la consulta. Límites del periodo incluidos.
+4. Si ninguna cumple los filtros: «Ninguna actividad abierta a inscripción cumple los filtros
+   indicados». Si no hay periodo abierto: «No hay actividades abiertas a inscripción en este momento».
+5. Las completas también aparecen («Completa (lista de espera)»). Las solicitudes en lista de
+   espera y las canceladas no ocupan plaza.
+6. Se muestra en pantalla en forma de lista.
+
+Implementación:
+- resources/schema.sql: columna cuota (euros/mes, opcional) en Actividad; data.sql le da valores.
+- src/ofertas/consultaOfertaModel.py: consultarOferta(idModalidad, idNivel, dias, hoy).
+- src/gui/paginas.py: PaginaConsultaOferta (menú «Oferta disponible»).
+- test/testConsultaOferta.py y test/testGui.py.
+
+Nota para la demo: la fecha de la consulta se puede cambiar en la pantalla (por defecto hoy).
+Con los periodos de la oferta definidos en «Ofertas» (p. ej. socios 2026-09-01 a 2026-09-15 y no
+socios 2026-09-16 a 2026-09-30), consultar con fecha 2026-09-10 muestra la oferta abierta a socios.
