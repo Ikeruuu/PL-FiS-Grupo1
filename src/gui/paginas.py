@@ -404,67 +404,107 @@ class PaginaOfertas(Pagina):
 
     def __init__(self, master, app):
         super().__init__(master, app)
+        # Reducir el padding superior de la pantalla entera para subir todo el contenido
+        self.configure(padding=(e.px(24), e.px(8)))
+
         cabecera(self, "Ofertas y actividades",
                  "Crea la oferta del curso, define los periodos de inscripción y gestiona las actividades")
         self.aviso = Aviso(self)
-        self.aviso.pack(fill="x", pady=(0, 14))
+        self.aviso.pack(fill="x", pady=(0, 2))
 
+        # Tarjeta superior ultra-compacta
         ofertaCard = tarjeta(self, fill="x")
-        ttk.Label(ofertaCard, text="Oferta del curso", style="Seccion.TLabel").pack(anchor="w")
-        self.infoOferta = tk.Label(ofertaCard, text="Cargando...", bg=e.TARJETA, fg=e.TEXTO_SUAVE,
-                                   font=e.fuente(9), justify="left")
-        self.infoOferta.pack(anchor="w", pady=(4, 10))
+        
+        # Título del curso e información en una sola línea para ahorrar espacio vertical
+        fInfo = tk.Frame(ofertaCard, bg=e.TARJETA)
+        fInfo.pack(fill="x")
+        ttk.Label(fInfo, text="Oferta del curso", style="Seccion.TLabel").pack(side="left")
+        self.infoOferta = tk.Label(fInfo, text="Cargando...", bg=e.TARJETA, fg=e.TEXTO_SUAVE,
+                                   font=e.fuente(8), justify="left")
+        self.infoOferta.pack(side="left", padx=(12, 0))
 
+        # Fila 1: Campo de Curso y Botón "Crear oferta"
         filaOferta = tk.Frame(ofertaCard, bg=e.TARJETA)
-        filaOferta.pack(fill="x")
-        self.curso = campo(filaOferta, "Curso (ej. 2026-2027)")
+        filaOferta.pack(fill="x", pady=(2, 0))
+        fCurso = tk.Frame(filaOferta, bg=e.TARJETA)
+        fCurso.pack(side="left", fill="x", expand=True)
+        self.curso = campo(fCurso, "Curso (ej. 2026-2027)")
         ttk.Button(filaOferta, text="Crear oferta", style="Primario.TButton",
-                   command=self.crearOferta).pack(side="left", padx=(12, 0), pady=(18, 0))
+                   command=self.crearOferta).pack(side="left", padx=(8, 0), pady=(4, 0))
 
+        # Fila 2: Periodos de inscripción en GRID de 5 columnas (4 campos + 1 botón visible)
         filaPeriodos = tk.Frame(ofertaCard, bg=e.TARJETA)
-        filaPeriodos.pack(fill="x", pady=(14, 0))
-        self.inicioSocios = campo(filaPeriodos, "Inicio insc. socios")
-        self.finSocios = campo(filaPeriodos, "Fin insc. socios")
-        self.inicioNoSocios = campo(filaPeriodos, "Inicio insc. no socios")
-        self.finNoSocios = campo(filaPeriodos, "Fin insc. no socios")
-        ttk.Button(filaPeriodos, text="Definir periodos", style="Secundario.TButton",
-                   command=self.definirPeriodos).pack(side="left", padx=(12, 0), pady=(18, 0))
+        filaPeriodos.pack(fill="x", pady=(2, 0))
+        for col in range(4):
+            filaPeriodos.columnconfigure(col, weight=1)
 
+        fP1 = tk.Frame(filaPeriodos, bg=e.TARJETA)
+        fP1.grid(row=0, column=0, sticky="ew", padx=(0, 2))
+        self.inicioSocios = campo(fP1, "Inicio socios")
+
+        fP2 = tk.Frame(filaPeriodos, bg=e.TARJETA)
+        fP2.grid(row=0, column=1, sticky="ew", padx=2)
+        self.finSocios = campo(fP2, "Fin socios")
+
+        fP3 = tk.Frame(filaPeriodos, bg=e.TARJETA)
+        fP3.grid(row=0, column=2, sticky="ew", padx=2)
+        self.inicioNoSocios = campo(fP3, "Inicio no socios")
+
+        fP4 = tk.Frame(filaPeriodos, bg=e.TARJETA)
+        fP4.grid(row=0, column=3, sticky="ew", padx=2)
+        self.finNoSocios = campo(fP4, "Fin no socios")
+
+        ttk.Button(filaPeriodos, text="Definir periodos", style="Secundario.TButton",
+                   command=self.definirPeriodos).grid(row=0, column=4, sticky="e", padx=(6, 0), pady=(12, 0))
+
+        # Cuerpo inferior: Tabla (altura 3) y Formulario de Añadir/Modificar
         cuerpo = ttk.Frame(self)
-        cuerpo.pack(fill="both", expand=True, pady=(18, 0))
+        cuerpo.pack(fill="both", expand=True, pady=(4, 0))
         cuerpo.columnconfigure(0, weight=1)
-        cuerpo.columnconfigure(1, weight=0, minsize=e.px(300))
+        cuerpo.columnconfigure(1, weight=0, minsize=e.px(340))
         cuerpo.rowconfigure(0, weight=1)
 
         izq = tarjeta(cuerpo)
-        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
-        ttk.Label(izq, text="Actividades de la oferta", style="Seccion.TLabel").pack(anchor="w", pady=(0, 10))
+        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        ttk.Label(izq, text="Actividades de la oferta", style="Seccion.TLabel").pack(anchor="w", pady=(0, 2))
         marco, self.tablaActividades = tabla(izq, [
             ("id", "ID", 36, False), ("actividad", "Actividad", 160, True),
             ("plazas", "Plazas", 56, False), ("horario", "Horario", 170, True),
-            ("fechas", "Periodo", 150, False)], altura=12)
+            ("fechas", "Periodo", 150, False)], altura=3)
         marco.pack(fill="both", expand=True)
         self.tablaActividades.bind("<<TreeviewSelect>>", lambda ev: self._cargarSeleccion())
 
         der = tarjeta(cuerpo)
         der.contenedor.grid(row=0, column=1, sticky="nsew")
         self.tituloFormulario = ttk.Label(der, text="Añadir actividad", style="Seccion.TLabel")
-        self.tituloFormulario.pack(anchor="w", pady=(0, 10))
-        self.modalidad = campo(der, "Modalidad (1 Nat., 2 Pilates, 3 Acond., 4 Pádel, 5 Tenis)")
-        self.nivel = campo(der, "Nivel (1 Iniciación, 2 Medio, 3 Avanzado)")
-        self.plazas = campo(der, "Plazas")
-        self.fechaInicio = campo(der, "Fecha inicio (AAAA-MM-DD)")
-        self.fechaFin = campo(der, "Fecha fin (AAAA-MM-DD)")
-        self.dia = campo(der, "Día semana (1 lunes...7 domingo)")
-        self.horaInicio = campo(der, "Hora inicio (HH:MM)")
-        self.horaFin = campo(der, "Hora fin (HH:MM)")
+        self.tituloFormulario.pack(anchor="w", pady=(0, 2))
+
+        fGrid = tk.Frame(der, bg=e.TARJETA)
+        fGrid.pack(fill="x")
+        fGrid.columnconfigure(0, weight=1)
+        fGrid.columnconfigure(1, weight=1)
+
+        c0 = tk.Frame(fGrid, bg=e.TARJETA)
+        c0.grid(row=0, column=0, sticky="nsew", padx=(0, 2))
+        c1 = tk.Frame(fGrid, bg=e.TARJETA)
+        c1.grid(row=0, column=1, sticky="nsew", padx=(2, 0))
+
+        self.modalidad = campo(c0, "Modalidad (1-5)")
+        self.nivel = campo(c1, "Nivel (1-3)")
+        self.plazas = campo(c0, "Plazas")
+        self.dia = campo(c1, "Día (1-7)")
+        self.fechaInicio = campo(c0, "Fecha inicio")
+        self.fechaFin = campo(c1, "Fecha fin")
+        self.horaInicio = campo(c0, "Hora inicio")
+        self.horaFin = campo(c1, "Hora fin")
+
         botones = tk.Frame(der, bg=e.TARJETA)
-        botones.pack(fill="x", pady=(14, 0))
+        botones.pack(fill="x", pady=(2, 0))
         self.botonGuardar = ttk.Button(botones, text="Añadir", style="Primario.TButton",
                                        command=self.guardar)
         self.botonGuardar.pack(side="left")
         ttk.Button(botones, text="Nueva actividad", style="Secundario.TButton",
-                  command=self._limpiarFormulario).pack(side="left", padx=(10, 0))
+                  command=self._limpiarFormulario).pack(side="left", padx=(8, 0))
 
         self.idOferta = None
         self.idActividadSeleccionada = None
@@ -482,8 +522,7 @@ class PaginaOfertas(Pagina):
                    f"Socios: {oferta['inicioInscripcionSocios']} a {oferta['finInscripcionSocios']} · "
                    f"No socios: {oferta['inicioInscripcionNoSocios']} a {oferta['finInscripcionNoSocios']}")
         self.infoOferta.configure(
-            text=f"Curso {oferta['curso']} · {oferta['fechaInicio']} a {oferta['fechaFin']} · {oferta['estado']}\n"
-                 f"{periodos}")
+            text=f"Curso {oferta['curso']} · {oferta['fechaInicio']} a {oferta['fechaFin']} · {oferta['estado']} | {periodos}")
         self._cargarActividades()
         self._limpiarFormulario()
 

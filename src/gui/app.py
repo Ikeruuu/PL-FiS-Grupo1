@@ -30,6 +30,7 @@ class CentroDeportivoApp(tk.Tk):
         e.activarAltaResolucion()
         super().__init__()
         self.title("Centro Deportivo Inteligente")
+        self.state('zoomed')
         e.configurarEstilos(self)
         self._ajustarTamano()
         self.report_callback_exception = self._errorInesperado
@@ -51,7 +52,7 @@ class CentroDeportivoApp(tk.Tk):
     def _ajustarTamano(self):
         pantallaAncho, pantallaAlto = self.winfo_screenwidth(), self.winfo_screenheight()
         ancho = min(e.px(1280), int(pantallaAncho * 0.92))
-        alto = min(e.px(760), int(pantallaAlto * 0.88))
+        alto = min(e.px(800), int(pantallaAlto * 0.88))
         self.minsize(min(e.px(1040), ancho), min(e.px(620), alto))
         x, y = (pantallaAncho - ancho) // 2, max(0, (pantallaAlto - alto) // 3)
         self.geometry(f"{ancho}x{alto}+{x}+{y}")
