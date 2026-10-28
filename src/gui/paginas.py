@@ -5,6 +5,8 @@ de modo que las reglas de las historias de usuario están en un único sitio.
 import tkinter as tk
 from tkinter import ttk
 
+from src.ofertas.actividadModel import ActividadError
+from src.ofertas.ofertaModel import OfertaError
 from src.gui import estilos as e
 from src.gui.componentes import Aviso, cabecera, campo, tabla, tarjeta
 from src.instalaciones.instalacionModel import (
@@ -395,3 +397,186 @@ class PaginaPersonas(Pagina):
             self.aviso.mostrar("No existe ninguna persona con ese identificador", "info")
         else:
             self.mostrarFicha(persona)
+
+#--------------------------------------------------------------------------------------------
+class PaginaOfertas(Pagina):
+    '''HU1/HU2/HU3/HU4: crear la oferta del curso, definir periodos y añadir/modificar actividades.'''
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(self, "Ofertas y actividades",
+                 "Crea la oferta del curso, define los periodos de inscripción y gestiona las actividades")
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(0, 14))
+
+        ofertaCard = tarjeta(self, fill="x")
+        ttk.Label(ofertaCard, text="Oferta del curso", style="Seccion.TLabel").pack(anchor="w")
+        self.infoOferta = tk.Label(ofertaCard, text="Cargando...", bg=e.TARJETA, fg=e.TEXTO_SUAVE,
+                                   font=e.fuente(9), justify="left")
+        self.infoOferta.pack(anchor="w", pady=(4, 10))
+
+        filaOferta = tk.Frame(ofertaCard, bg=e.TARJETA)
+        filaOferta.pack(fill="x")
+        self.curso = campo(filaOferta, "Curso (ej. 2026-2027)")
+        ttk.Button(filaOferta, text="Crear oferta", style="Primario.TButton",
+                   command=self.crearOferta).pack(side="left", padx=(12, 0), pady=(18, 0))
+
+        filaPeriodos = tk.Frame(ofertaCard, bg=e.TARJETA)
+        filaPeriodos.pack(fill="x", pady=(14, 0))
+        self.inicioSocios = campo(filaPeriodos, "Inicio insc. socios")
+        self.finSocios = campo(filaPeriodos, "Fin insc. socios")
+        self.inicioNoSocios = campo(filaPeriodos, "Inicio insc. no socios")
+        self.finNoSocios = campo(filaPeriodos, "Fin insc. no socios")
+        ttk.Button(filaPeriodos, text="Definir periodos", style="Secundario.TButton",
+                   command=self.definirPeriodos).pack(side="left", padx=(12, 0), pady=(18, 0))
+
+        cuerpo = ttk.Frame(self)
+        cuerpo.pack(fill="both", expand=True, pady=(18, 0))
+        cuerpo.columnconfigure(0, weight=1)
+        cuerpo.columnconfigure(1, weight=0, minsize=e.px(300))
+        cuerpo.rowconfigure(0, weight=1)
+
+        izq = tarjeta(cuerpo)
+        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        ttk.Label(izq, text="Actividades de la oferta", style="Seccion.TLabel").pack(anchor="w", pady=(0, 10))
+        marco, self.tablaActividades = tabla(izq, [
+            ("id", "ID", 36, False), ("actividad", "Actividad", 160, True),
+            ("plazas", "Plazas", 56, False), ("horario", "Horario", 170, True),
+            ("fechas", "Periodo", 150, False)], altura=12)
+        marco.pack(fill="both", expand=True)
+        self.tablaActividades.bind("<<TreeviewSelect>>", lambda ev: self._cargarSeleccion())
+
+        der = tarjeta(cuerpo)
+        der.contenedor.grid(row=0, column=1, sticky="nsew")
+        self.tituloFormulario = ttk.Label(der, text="Añadir actividad", style="Seccion.TLabel")
+        self.tituloFormulario.pack(anchor="w", pady=(0, 10))
+        self.modalidad = campo(der, "Modalidad (1 Nat., 2 Pilates, 3 Acond., 4 Pádel, 5 Tenis)")
+        self.nivel = campo(der, "Nivel (1 Iniciación, 2 Medio, 3 Avanzado)")
+        self.plazas = campo(der, "Plazas")
+        self.fechaInicio = campo(der, "Fecha inicio (AAAA-MM-DD)")
+        self.fechaFin = campo(der, "Fecha fin (AAAA-MM-DD)")
+        self.dia = campo(der, "Día semana (1 lunes...7 domingo)")
+        self.horaInicio = campo(der, "Hora inicio (HH:MM)")
+        self.horaFin = campo(der, "Hora fin (HH:MM)")
+        botones = tk.Frame(der, bg=e.TARJETA)
+        botones.pack(fill="x", pady=(14, 0))
+        self.botonGuardar = ttk.Button(botones, text="Añadir", style="Primario.TButton",
+                                       command=self.guardar)
+        self.botonGuardar.pack(side="left")
+        ttk.Button(botones, text="Nueva actividad", style="Secundario.TButton",
+                  command=self._limpiarFormulario).pack(side="left", padx=(10, 0))
+
+        self.idOferta = None
+        self.idActividadSeleccionada = None
+
+    def refrescar(self):
+        self.aviso.ocultar()
+        oferta = self.app.ofertas.getOfertaActiva()
+        if oferta is None:
+            self.infoOferta.configure(text="No hay ninguna oferta activa todavía.")
+            self.tablaActividades.delete(*self.tablaActividades.get_children())
+            self.idOferta = None
+            return
+        self.idOferta = oferta["id"]
+        periodos = ("Periodos sin definir" if oferta["inicioInscripcionSocios"] is None else
+                   f"Socios: {oferta['inicioInscripcionSocios']} a {oferta['finInscripcionSocios']} · "
+                   f"No socios: {oferta['inicioInscripcionNoSocios']} a {oferta['finInscripcionNoSocios']}")
+        self.infoOferta.configure(
+            text=f"Curso {oferta['curso']} · {oferta['fechaInicio']} a {oferta['fechaFin']} · {oferta['estado']}\n"
+                 f"{periodos}")
+        self._cargarActividades()
+        self._limpiarFormulario()
+
+    def _cargarActividades(self):
+        self.tablaActividades.delete(*self.tablaActividades.get_children())
+        for a in self.app.actividades.getActividadesDeOferta(self.idOferta):
+            horarios = self.app.actividades.getHorarios(a["id"])
+            horario = ", ".join(describirFranja(h) for h in horarios) or "sin horario"
+            self.tablaActividades.insert("", "end", iid=str(a["id"]), values=(
+                a["id"], describirActividad(a), a["plazas"], horario,
+                f"{fechaCorta(a['fechaInicio'])} – {fechaCorta(a['fechaFin'])}"))
+
+    def _rellenar(self, entrada, valor):
+        entrada.delete(0, "end")
+        entrada.insert(0, valor)
+
+    def _limpiarFormulario(self):
+        self.idActividadSeleccionada = None
+        self.tituloFormulario.configure(text="Añadir actividad")
+        self.botonGuardar.configure(text="Añadir")
+        for entrada in (self.modalidad, self.nivel, self.plazas, self.fechaInicio, self.fechaFin,
+                       self.dia, self.horaInicio, self.horaFin):
+            entrada.delete(0, "end")
+        self.tablaActividades.selection_remove(*self.tablaActividades.selection())
+
+    def _cargarSeleccion(self):
+        sel = self.tablaActividades.selection()
+        if not sel:
+            return
+        a = self.app.actividades.getActividad(int(sel[0]))
+        self.idActividadSeleccionada = a["id"]
+        self.tituloFormulario.configure(text=f"Modificar actividad {a['id']}")
+        self.botonGuardar.configure(text="Guardar cambios")
+        self._rellenar(self.modalidad, a["idModalidad"])
+        self._rellenar(self.nivel, a["idNivel"])
+        self._rellenar(self.plazas, a["plazas"])
+        self._rellenar(self.fechaInicio, a["fechaInicio"])
+        self._rellenar(self.fechaFin, a["fechaFin"])
+        horarios = self.app.actividades.getHorarios(a["id"])
+        if horarios:
+            self._rellenar(self.dia, horarios[0]["diaSemana"])
+            self._rellenar(self.horaInicio, horarios[0]["horaInicio"])
+            self._rellenar(self.horaFin, horarios[0]["horaFin"])
+
+    def crearOferta(self):
+        curso = self.curso.get().strip()
+        try:
+            mensaje = self.app.ofertas.crearOferta(curso)
+        except OfertaError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.curso.delete(0, "end")
+        self.refrescar()
+        self.aviso.mostrar(mensaje, "ok")
+
+    def definirPeriodos(self):
+        if self.idOferta is None:
+            self.aviso.mostrar("Primero crea la oferta del curso", "info")
+            return
+        try:
+            mensaje = self.app.ofertas.definirPeriodos(
+                self.idOferta, self.inicioSocios.get().strip(), self.finSocios.get().strip(),
+                self.inicioNoSocios.get().strip(), self.finNoSocios.get().strip())
+        except OfertaError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.refrescar()
+        self.aviso.mostrar(mensaje, "ok")
+
+    def _leerFormulario(self):
+        return (int(self.modalidad.get()), int(self.nivel.get()), self.fechaInicio.get().strip(),
+               self.fechaFin.get().strip(), int(self.plazas.get()),
+               [(int(self.dia.get()), self.horaInicio.get().strip(), self.horaFin.get().strip())])
+
+    def guardar(self):
+        if self.idOferta is None:
+            self.aviso.mostrar("Primero crea la oferta del curso", "info")
+            return
+        try:
+            idModalidad, idNivel, fechaInicio, fechaFin, plazas, horarios = self._leerFormulario()
+        except ValueError:
+            self.aviso.mostrar("Revisa los campos numéricos (modalidad, nivel, plazas, día)", "error")
+            return
+        try:
+            if self.idActividadSeleccionada is None:
+                mensaje = self.app.actividades.anadirActividad(
+                    self.idOferta, idModalidad, idNivel, fechaInicio, fechaFin, plazas, horarios)
+            else:
+                mensaje = self.app.actividades.modificarActividad(
+                    self.idActividadSeleccionada, idModalidad, idNivel, fechaInicio, fechaFin,
+                    plazas, horarios)
+        except ActividadError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.refrescar()
+        self.aviso.mostrar(mensaje, "ok")

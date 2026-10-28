@@ -133,6 +133,44 @@ class TestGui(unittest.TestCase):
         p.consultar()
         self.assertEqual(p.aviso.mensaje, "No existe ninguna persona con ese identificador")
 
+    def testOfertasCrearYListar(self):
+        self.app.mostrar("ofertas")
+        p = self.app.paginas["ofertas"]
+        p.modalidad.insert(0, "1")
+        p.nivel.insert(0, "1")
+        p.plazas.insert(0, "10")
+        p.fechaInicio.insert(0, "2026-10-01")
+        p.fechaFin.insert(0, "2027-06-30")
+        p.dia.insert(0, "1")
+        p.horaInicio.insert(0, "18:00")
+        p.horaFin.insert(0, "19:00")
+        p.guardar()
+        self.assertEqual(p.aviso.tipo, "ok")
+        # data.sql precarga 10 actividades en la oferta 1; con la nueva añadida suman 11
+        self.assertEqual(len(p.tablaActividades.get_children()), 11)
+
+    def testOfertasModificarActividad(self):
+        self.app.mostrar("ofertas")
+        p = self.app.paginas["ofertas"]
+        p.modalidad.insert(0, "1")
+        p.nivel.insert(0, "1")
+        p.plazas.insert(0, "10")
+        p.fechaInicio.insert(0, "2026-10-01")
+        p.fechaFin.insert(0, "2027-06-30")
+        p.dia.insert(0, "1")
+        p.horaInicio.insert(0, "18:00")
+        p.horaFin.insert(0, "19:00")
+        p.guardar()
+        
+        idActividad = max(p.tablaActividades.get_children(), key=int)
+        p.tablaActividades.selection_set(idActividad)
+        # Cargar manualmente la selección (selection_set no dispara <<TreeviewSelect>> en Tkinter)
+        p._cargarSeleccion()
+        
+        p.plazas.delete(0, "end")
+        p.plazas.insert(0, "15")
+        p.guardar()
+        self.assertEqual(p.aviso.tipo, "ok")
 
 if __name__ == '__main__':
     unittest.main()
