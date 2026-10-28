@@ -1,6 +1,7 @@
 import datetime
 
 from src.util.database import Database
+from src.config import DB_PATH
 
 
 class OfertaError(Exception):
@@ -10,7 +11,7 @@ class OfertaError(Exception):
 class OfertaModel:
 
     def __init__(self, db_path=None):
-        self.db = Database(db_path) if db_path else Database()
+        self.db = Database(DB_PATH if db_path is None else db_path)
 
     #HU4: crea la oferta de un curso. Si no se indican fechas, usa octubre->junio del curso.
     def crearOferta(self, curso, fechaInicio=None, fechaFin=None):

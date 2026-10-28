@@ -2,7 +2,7 @@
 
 drop table if exists Employee;
 drop table if exists Company;
-
+drop table if exists Inscripcion;
 drop table if exists Persona;
 drop table if exists Horario;
 drop table if exists Actividad;
@@ -78,4 +78,24 @@ create table Persona (id integer not null primary key, dni varchar(20) not null 
                       check ((numSocio is null) = (fechaAltaSocio is null)),
                       check (telefono is not null or correo is not null)
                      );
+--Inscripciones y solicitudes en lista de espera.
+create table Inscripcion (
+    id integer not null primary key,
+    idPersona integer not null,
+    idActividad integer not null,
+    fechaSolicitud varchar(26) not null,
+    fechaInscripcion varchar(26),
+    estado varchar(20) not null,
 
+    foreign key (idPersona) references Persona(id),
+    foreign key (idActividad) references Actividad(id),
+
+    unique (idPersona, idActividad),
+    check (estado in (
+        'CONFIRMADA',
+        'EN_ESPERA',
+        'PENDIENTE_ACEPTACION',
+        'CANCELADA'
+    )),
+    check (estado != 'CONFIRMADA' or fechaInscripcion is not null)
+);
