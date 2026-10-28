@@ -6,6 +6,7 @@ import logging
 import tkinter as tk
 from tkinter import font as tkfont
 
+from src.inscripciones.listaEsperaModel import ListaEsperaModel
 from src.gui.paginas import PaginaInscripciones
 from src.inscripciones.inscripcionModel import InscripcionModel
 from src.gui import estilos as e
@@ -53,6 +54,7 @@ class CentroDeportivoApp(tk.Tk):
         self.consultaOferta = ConsultaOfertaModel(db_path)
         self.misInscripciones = MisInscripcionesModel(db_path)
         self.cancelaciones = CancelacionModel(db_path)
+        self.listaEspera = ListaEsperaModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
