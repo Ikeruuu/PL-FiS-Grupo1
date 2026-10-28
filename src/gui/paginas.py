@@ -3,9 +3,13 @@ Pantallas de la interfaz gráfica. Cada página usa los mismos modelos que la ve
 de modo que las reglas de las historias de usuario están en un único sitio.
 '''
 import tkinter as tk
-from tkinter import ttk
+from datetime import date
+from tkinter import messagebox, ttk
 
+from src.inscripciones.comun import IdentificacionError, describirDias
 from src.inscripciones.inscripcionModel import InscripcionError
+from src.ofertas.actividadModel import ActividadModel
+from src.ofertas.consultaOfertaModel import describirCuota, describirPlazas
 from src.ofertas.actividadModel import ActividadError
 from src.ofertas.ofertaModel import OfertaError
 from src.gui import estilos as e
@@ -737,3 +741,264 @@ class PaginaInscripciones(Pagina):
         self.aviso.mostrar(
             f"{mensaje}. Actividad: {actividad}", tipo
         )
+
+#--------------------------------------------------------------------------------------------
+#Historias de José María García Galán: consultar la oferta disponible (35334), cancelar una
+#inscripción (35335) y consultar las actividades en las que estoy inscrito (35336)
+#--------------------------------------------------------------------------------------------
+def selectorPersona(master):
+    '''DNI o número de socio, igual que en Inscripciones. Devuelve (tipo, entrada).'''
+    tipo = tk.StringVar(value="dni")
+    radios = tk.Frame(master, bg=e.TARJETA)
+    radios.pack(anchor="w")
+    ttk.Radiobutton(radios, text="DNI", value="dni", variable=tipo).pack(side="left")
+    ttk.Radiobutton(radios, text="Número de socio", value="socio",
+                    variable=tipo).pack(side="left", padx=(14, 0))
+    entrada = campo(master, "DNI o número de socio")
+    return tipo, entrada
+
+
+#Argumentos dni/numSocio a partir del selector (lanza ValidationError si el nº no es válido)
+def leerPersona(tipo, entrada):
+    identificador = entrada.get().strip()
+    if not identificador:
+        raise ValidationError("Indica el DNI o el número de socio")
+    if tipo.get() == "dni":
+        return {"dni": identificador}
+    return {"numSocio": validate_positive_int(identificador)}
+
+
+#Campo de fecha con la de hoy ya puesta (se puede cambiar para probar otros días)
+def campoFecha(master, etiqueta):
+    entrada = campo(master, etiqueta)
+    entrada.insert(0, date.today().isoformat())
+    return entrada
+
+
+class PaginaConsultaOferta(Pagina):
+    '''HU 35334: consultar la oferta de actividades abiertas a inscripción, con filtros.'''
+
+    TODAS = "Todas"
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(self, "Oferta disponible",
+                 "Actividades con el periodo de inscripción abierto. Los filtros son opcionales.")
+
+        filtros = tarjeta(self, fill="x")
+        fila = tk.Frame(filtros, bg=e.TARJETA)
+        fila.pack(fill="x")
+        for i, (texto, peso) in enumerate((("Modalidad", 3), ("Nivel", 2), ("Periodicidad", 3),
+                                           ("Fecha", 2), ("", 0))):
+            fila.columnconfigure(i, weight=peso)
+            ttk.Label(fila, text=texto, style="Campo.TLabel").grid(row=0, column=i, sticky="w",
+                                                                    padx=(0, 12))
+        self.modalidad = ttk.Combobox(fila, state="readonly")
+        self.modalidad.grid(row=1, column=0, sticky="ew", padx=(0, 12))
+        self.nivel = ttk.Combobox(fila, state="readonly")
+        self.nivel.grid(row=1, column=1, sticky="ew", padx=(0, 12))
+        self.periodicidad = ttk.Combobox(fila, state="readonly")
+        self.periodicidad.grid(row=1, column=2, sticky="ew", padx=(0, 12))
+        self.fecha = ttk.Entry(fila, width=12)
+        self.fecha.grid(row=1, column=3, sticky="ew", padx=(0, 12))
+        self.fecha.insert(0, date.today().isoformat())
+        ttk.Button(fila, text="Consultar", style="Primario.TButton",
+                   command=self.consultar).grid(row=1, column=4, sticky="e")
+
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(14, 0))
+
+        resultado = tarjeta(self, fill="both", expand=True, pady=(14, 0))
+        self.titulo = ttk.Label(resultado, text="Pulsa Consultar para ver la oferta",
+                                style="Seccion.TLabel")
+        self.titulo.pack(anchor="w", pady=(0, 10))
+        marco, self.lista = tabla(resultado, [
+            ("actividad", "Actividad", 135, False), ("periodicidad", "Periodicidad", 115, False),
+            ("horario", "Horario", 150, True), ("instalacion", "Instalación", 115, False),
+            ("cuota", "Cuota", 65, False), ("plazas", "Plazas libres", 160, False),
+            ("abierta", "Abierta para", 85, False)], altura=12)
+        marco.pack(fill="both", expand=True)
+        self.lista.tag_configure("completa", background=e.OCUPADA_FONDO)
+
+    def refrescar(self):
+        self.aviso.ocultar()
+        self.modalidad["values"] = [self.TODAS] + list(ActividadModel.MODALIDADES.values())
+        self.nivel["values"] = [self.TODAS] + list(ActividadModel.NIVELES.values())
+        self.periodicidades = self.app.consultaOferta.getPeriodicidades()
+        self.periodicidad["values"] = [self.TODAS] + [describirDias(d) for d in self.periodicidades]
+        for combo in (self.modalidad, self.nivel, self.periodicidad):
+            if combo.current() < 0:
+                combo.current(0)
+
+    def consultar(self):
+        self.aviso.ocultar()
+        self.lista.delete(*self.lista.get_children())
+        try:
+            hoy = validate_date(self.fecha.get())
+        except ValidationError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        #El índice 0 es "Todas"; los demás coinciden con los ids (1, 2, ...)
+        idModalidad = self.modalidad.current() or None
+        idNivel = self.nivel.current() or None
+        indice = self.periodicidad.current()
+        dias = self.periodicidades[indice - 1] if indice > 0 else None
+
+        lista, mensaje = self.app.consultaOferta.consultarOferta(idModalidad, idNivel, dias, hoy)
+        self.titulo.configure(text=f"{len(lista)} actividad(es) abiertas a inscripción")
+        if mensaje:
+            self.aviso.mostrar(mensaje, "info")
+            return
+        for a in lista:
+            self.lista.insert("", "end", iid=str(a["id"]), values=(
+                f"{a['modalidad']} {a['nivel'].lower()}", a["periodicidad"], a["horario"],
+                a["instalacion"], describirCuota(a["cuota"]), describirPlazas(a),
+                a["abiertaPara"].capitalize()), tags=("completa",) if a["completa"] else ())
+
+
+class PaginaMisInscripciones(Pagina):
+    '''HU 35336: consultar las actividades en las que estoy inscrito.'''
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(self, "Mis inscripciones",
+                 "Actividades con plaza, en lista de espera o canceladas")
+        formulario = tarjeta(self, fill="x")
+        self.tipoBusqueda, self.identificador = selectorPersona(formulario)
+        self.identificador.bind("<Return>", lambda ev: self.consultar())
+        ttk.Button(formulario, text="Consultar", style="Primario.TButton",
+                   command=self.consultar).pack(anchor="e", pady=(12, 0))
+
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(14, 0))
+
+        resultado = tarjeta(self, fill="both", expand=True, pady=(14, 0))
+        self.titulo = ttk.Label(resultado, text="Identifícate y pulsa Consultar",
+                                style="Seccion.TLabel")
+        self.titulo.pack(anchor="w", pady=(0, 10))
+        marco, self.lista = tabla(resultado, [
+            ("actividad", "Actividad", 160, True), ("horario", "Horario", 220, True),
+            ("instalacion", "Instalación", 130, False), ("fechas", "Periodo", 140, False),
+            ("estado", "Estado", 240, True)], altura=10)
+        marco.pack(fill="both", expand=True)
+        self.lista.tag_configure("CANCELADA", foreground=e.NO_CABE_TEXTO)
+        self.lista.tag_configure("EN_ESPERA", background=e.DIA_FONDO)
+
+    def refrescar(self):
+        self.aviso.ocultar()
+
+    def consultar(self):
+        self.aviso.ocultar()
+        self.lista.delete(*self.lista.get_children())
+        try:
+            persona, lista, mensaje = self.app.misInscripciones.consultarInscripciones(
+                **leerPersona(self.tipoBusqueda, self.identificador))
+        except (IdentificacionError, ValidationError) as error:
+            self.titulo.configure(text="Identifícate y pulsa Consultar")
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.titulo.configure(text=f"Inscripciones de {persona['nombre']} {persona['apellidos']}")
+        if mensaje:
+            self.aviso.mostrar(mensaje, "info")
+            return
+        for f in lista:
+            self.lista.insert("", "end", iid=str(f["idInscripcion"]), values=(
+                f"{f['modalidad']} {f['nivel'].lower()}", f["horario"], f["instalacion"],
+                f"{fechaCorta(f['fechaInicio'])} – {fechaCorta(f['fechaFin'])}",
+                f["descripcionEstado"]), tags=(f["estado"],))
+
+
+class PaginaCancelar(Pagina):
+    '''HU 35335: cancelar una inscripción (o una solicitud en lista de espera).'''
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(self, "Cancelar inscripción",
+                 "Si la actividad ya ha comenzado, se cancela a partir de un mes y se solicita "
+                 "entre el 1 y el 15 del mes anterior")
+        formulario = tarjeta(self, fill="x")
+        self.tipoBusqueda, self.identificador = selectorPersona(formulario)
+        self.identificador.bind("<Return>", lambda ev: self.buscar())
+        ttk.Button(formulario, text="Ver mis inscripciones", style="Secundario.TButton",
+                   command=self.buscar).pack(anchor="e", pady=(12, 0))
+
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(14, 0))
+
+        cuerpo = ttk.Frame(self)
+        cuerpo.pack(fill="both", expand=True, pady=(14, 0))
+        cuerpo.columnconfigure(0, weight=1)
+        cuerpo.columnconfigure(1, weight=0, minsize=e.px(260))
+        cuerpo.rowconfigure(0, weight=1)
+
+        izq = tarjeta(cuerpo)
+        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        ttk.Label(izq, text="Selecciona la actividad", style="Seccion.TLabel").pack(
+            anchor="w", pady=(0, 10))
+        marco, self.lista = tabla(izq, [
+            ("actividad", "Actividad", 160, True), ("fechas", "Periodo", 140, False),
+            ("estado", "Estado", 240, True)], altura=8)
+        marco.pack(fill="both", expand=True)
+
+        der = tarjeta(cuerpo)
+        der.contenedor.grid(row=0, column=1, sticky="nsew")
+        ttk.Label(der, text="Cancelación", style="Seccion.TLabel").pack(anchor="w")
+        self.mes = campo(der, "Mes desde el que cancelas (AAAA-MM)")
+        tk.Label(der, text="Solo si la actividad ya ha comenzado", bg=e.TARJETA,
+                 fg=e.TEXTO_SUAVE, font=e.fuente(8)).pack(anchor="w")
+        self.fecha = campoFecha(der, "Fecha de la solicitud (AAAA-MM-DD)")
+        ttk.Button(der, text="Cancelar inscripción", style="Primario.TButton",
+                   command=self.cancelar).pack(anchor="w", pady=(16, 0))
+        self.persona = None
+
+    def refrescar(self):
+        self.aviso.ocultar()
+
+    def buscar(self, ocultarAviso=True):
+        if ocultarAviso:
+            self.aviso.ocultar()
+        self.lista.delete(*self.lista.get_children())
+        self.persona = None
+        try:
+            self.persona = leerPersona(self.tipoBusqueda, self.identificador)
+            _, lista, _ = self.app.misInscripciones.consultarInscripciones(**self.persona)
+        except (IdentificacionError, ValidationError) as error:
+            self.persona = None
+            self.aviso.mostrar(str(error), "error")
+            return
+        vigentes = [f for f in lista if f["estado"] != "CANCELADA"]
+        for f in vigentes:
+            self.lista.insert("", "end", iid=str(f["idActividad"]), values=(
+                f"{f['modalidad']} {f['nivel'].lower()}",
+                f"{fechaCorta(f['fechaInicio'])} – {fechaCorta(f['fechaFin'])}",
+                f["descripcionEstado"]))
+        if not vigentes and ocultarAviso:
+            self.aviso.mostrar("No tiene ninguna inscripción ni solicitud que se pueda cancelar",
+                               "info")
+
+    def cancelar(self):
+        self.aviso.ocultar()
+        seleccion = self.lista.selection()
+        if self.persona is None or not seleccion:
+            self.aviso.mostrar("Identifícate y selecciona una actividad", "info")
+            return
+        try:
+            hoy = validate_date(self.fecha.get())
+        except ValidationError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        argumentos = dict(self.persona, mes=self.mes.get().strip() or None, hoy=hoy)
+        idActividad = int(seleccion[0])
+        try:
+            resumen = self.app.cancelaciones.comprobarCancelacion(idActividad, **argumentos)
+            if not messagebox.askyesno("Confirmar cancelación", f"{resumen}.\n\n¿Confirmas?",
+                                       parent=self):
+                self.aviso.mostrar("Cancelación anulada; no se ha modificado nada", "info")
+                return
+            mensaje = self.app.cancelaciones.cancelar(idActividad, **argumentos)
+        except (IdentificacionError, ValidationError) as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.mes.delete(0, "end")
+        self.buscar(ocultarAviso=False)
+        self.aviso.mostrar(mensaje, "ok")

@@ -17,6 +17,8 @@ SampleProject
 │   ├── employees/     Capa de empleados (modelo y vista)
 │   ├── instalaciones/ HU3 Asignar instalación y HU9 Consultar ocupación (modelos y vista)
 │   ├── personas/      HU8 Gestionar los datos de personas (modelo y vista)
+│   ├── ofertas/       Oferta, actividades y consulta de la oferta disponible
+│   ├── inscripciones/ Inscribirse, consultar mis inscripciones y cancelar
 │   ├── gui/           Interfaz gráfica (Tkinter): ventana principal y pantallas
 │   └── util/          Acceso a datos, validaciones y excepciones
 └── test/              Tests unitarios (unittest / pytest)
@@ -66,6 +68,11 @@ La interfaz gráfica usa Tkinter (incluido en Python para Windows) y tiene cuatr
 **Inicio** (resumen del centro), **Asignar instalación** (HU3), **Ocupación** (HU9) y
 **Personas** (HU8). Usa los mismos modelos que la consola, así que las reglas de negocio
 son las mismas. Si Tkinter no está disponible, se abre el menú de consola.
+
+Además, **Oferta disponible** (consultar la oferta abierta a inscripción con filtros),
+**Mis inscripciones** (estado de todas las inscripciones de una persona) y **Cancelar
+inscripción** (con confirmación y plazos). Ver `doc/HU-consultar-oferta.txt`,
+`doc/HU-mis-inscripciones.txt` y `doc/HU-cancelar-inscripcion.txt`.
 
 > Nota: en cada arranque se **borra y recrea** el esquema y se recargan los datos
 > iniciales (fíjate en `src/main.py`). En consola, el menú principal se cierra con la opción 0.
