@@ -35,26 +35,80 @@ class OfertaModel:
         return f"Oferta {curso} creada ({fechaInicio} a {fechaFin})"
 
     #HU2: define los periodos de inscripción de socios y no socios de una oferta.
-    def definirPeriodos(self, idOferta, inicioSocios, finSocios, inicioNoSocios, finNoSocios):
+
+    def definirPeriodos(self, idOferta, inicioSocios, finSocios,
+                        inicioNoSocios, finNoSocios):
+
         oferta = self.getOferta(idOferta)
+
         if oferta is None:
             raise OfertaError(f"No existe la oferta {idOferta}")
 
+        # No se pueden redefinir periodos ya guardados.
         if oferta["inicioInscripcionSocios"] is not None:
-            raise OfertaError("La oferta ya tiene periodos de inscripción definidos")
+            raise OfertaError(
+                "La oferta ya tiene periodos de inscripción definidos"
+            )
 
+        # Comprobar que todas las fechas son obligatorias.
+        fechas = {
+            "Inicio socios": inicioSocios,
+            "Fin socios": finSocios,
+            "Inicio no socios": inicioNoSocios,
+            "Fin no socios": finNoSocios
+        }
+
+        for nombre, valor in fechas.items():
+            if not valor or not valor.strip():
+                raise OfertaError(f"El campo {nombre} es obligatorio")
+
+            try:
+                datetime.date.fromisoformat(valor)
+            except ValueError:
+                raise OfertaError(
+                    f"Fecha incorrecta en {nombre}. Usa AAAA-MM-DD"
+                )
+
+        # Comprobar orden de cada periodo.
+        if inicioSocios > finSocios:
+            raise OfertaError(
+                "El inicio del periodo de socios no puede "
+                "ser posterior a su fin"
+            )
+
+        if inicioNoSocios > finNoSocios:
+            raise OfertaError(
+                "El inicio del periodo de no socios no puede "
+                "ser posterior a su fin"
+            )
+
+        # Los periodos no pueden solaparse.
         if finSocios >= inicioNoSocios:
-            raise OfertaError("El periodo de socios debe ser anterior al de no socios, sin solape")
+            raise OfertaError(
+                "El periodo de socios debe ser anterior "
+                "al de no socios, sin solape"
+            )
 
+        # Ambos deben terminar antes de comenzar la oferta.
         if finNoSocios >= oferta["fechaInicio"]:
-            raise OfertaError("Los periodos deben finalizar antes del inicio de la oferta")
+            raise OfertaError(
+                "Los periodos deben finalizar antes "
+                "del inicio de la oferta"
+            )
 
         self.db.executeUpdateQuery(
-            """update Oferta set inicioInscripcionSocios = ?, finInscripcionSocios = ?,
-               inicioInscripcionNoSocios = ?, finInscripcionNoSocios = ? where id = ?""",
-            inicioSocios, finSocios, inicioNoSocios, finNoSocios, idOferta)
+            """UPDATE Oferta
+            SET inicioInscripcionSocios = ?,
+                finInscripcionSocios = ?,
+                inicioInscripcionNoSocios = ?,
+                finInscripcionNoSocios = ?
+            WHERE id = ?""",
+            inicioSocios, finSocios,
+            inicioNoSocios, finNoSocios, idOferta
+        )
 
         return "Periodos de inscripción definidos correctamente"
+
 
     def getOferta(self, idOferta):
         filas = self.db.executeQuery("select * from Oferta where id = ?", idOferta)

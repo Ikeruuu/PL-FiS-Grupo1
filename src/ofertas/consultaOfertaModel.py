@@ -58,16 +58,40 @@ class ConsultaOfertaModel:
         resultados o el texto a mostrar si no los hay. dias es una colección de días de la
         semana (1=lunes ... 7=domingo) y selecciona las actividades con esa periodicidad exacta.
         '''
-        hoy = datetime.date.today() if hoy is None else hoy
-        if isinstance(hoy, str):
-            hoy = datetime.date.fromisoformat(hoy)
-        dias = tuple(sorted(set(dias))) if dias else None
+        todasFechas = isinstance(hoy, str) and hoy.upper() == "TODAS"
+
+        if todasFechas:
+            hoy = datetime.date.today()
+        else:
+            
+            todasFechas = isinstance(hoy, str) and hoy.upper() == "TODAS"
+
+            if todasFechas:
+                hoy = datetime.date.today()
+            else:
+                hoy = datetime.date.today() if hoy is None else hoy
+                if isinstance(hoy, str):
+                    hoy = datetime.date.fromisoformat(hoy)
+
+            dias = tuple(sorted(set(dias))) if dias else None
+
 
         with conectar(self.db_path) as conn:
             oferta = conn.execute("select * from Oferta where estado = 'ACTIVA'").fetchone()
-            abierta = self.abiertaPara(oferta, hoy) if oferta is not None else None
-            if abierta is None:
-                return [], self.SIN_ABIERTAS
+            if oferta is None:
+                abierta = None
+            elif todasFechas:
+                abierta = "según periodo"
+            else:
+               
+                if oferta is None:
+                    return [], self.SIN_ABIERTAS
+
+                abierta = "según periodo" if todasFechas else self.abiertaPara(oferta, hoy)
+
+                if abierta is None:
+                    return [], self.SIN_ABIERTAS
+
 
             actividades = conn.execute(
                 """select a.*, m.nombre as modalidad, n.nombre as nivel,
@@ -76,9 +100,12 @@ class ConsultaOfertaModel:
                    join Modalidad m on m.id = a.idModalidad
                    join Nivel n on n.id = a.idNivel
                    left join Instalacion ins on ins.id = a.idInstalacion
-                   where a.idOferta = ? and a.fechaFin >= ?
-                   order by m.nombre, a.idNivel, a.id""",
-                (oferta["id"], hoy.isoformat())).fetchall()
+                   
+                    where a.idOferta = ?
+                    and (? = 1 or a.fechaFin >= ?)
+                    order by m.nombre, a.idNivel, a.id""",
+                    (oferta["id"], int(todasFechas), hoy.isoformat())).fetchall()
+
 
             resultado = []
             for a in actividades:

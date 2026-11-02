@@ -148,8 +148,17 @@ if __name__ == '__main__':
     
     # Inicializar la base de datos con las tablas y datos de prueba
     db = Database(db_path)
-    db.executeScript(SCHEMA_PATH)
-    db.executeScript(DATA_PATH)
+    
+    # Inicializar la base de datos solo la primera vez.
+    tablas = db.executeQuery(
+        "SELECT name FROM sqlite_master "
+        "WHERE type = 'table' AND name = 'Oferta'"
+    )
+
+    if not tablas:
+        db.executeScript(SCHEMA_PATH)
+        db.executeScript(DATA_PATH)
+
 
     # Iniciar la aplicación
     ejecutar(db_path)

@@ -1,5 +1,6 @@
 from src.util.database import Database
 from src.config import DB_PATH
+from datetime import date
 
 class ActividadError(Exception):
     pass
@@ -15,12 +16,52 @@ class ActividadModel:
     def __init__(self, db_path=None):
         self.db = Database(DB_PATH if db_path is None else db_path)
 
+
+        
+    def _validarFechas(self, idOferta, fechaInicio, fechaFin):
+        # Obtener el periodo de la oferta.
+        filas = self.db.executeQuery(
+            "SELECT fechaInicio, fechaFin FROM Oferta WHERE id = ?",
+            idOferta
+        )
+
+        if not filas:
+            raise ActividadError(f"No existe la oferta {idOferta}")
+
+        # Validar que las fechas existen y tienen formato correcto.
+        try:
+            inicio = date.fromisoformat(fechaInicio)
+            fin = date.fromisoformat(fechaFin)
+        except (ValueError, TypeError):
+            raise ActividadError(
+                "Las fechas deben ser válidas y tener formato AAAA-MM-DD"
+            )
+
+        # Validar orden cronológico.
+        if inicio > fin:
+            raise ActividadError(
+                "La fecha de inicio no puede ser posterior a la de fin"
+            )
+
+        inicioOferta = date.fromisoformat(filas[0]["fechaInicio"])
+        finOferta = date.fromisoformat(filas[0]["fechaFin"])
+
+        # La actividad debe estar dentro del periodo de la oferta.
+        if inicio < inicioOferta or fin > finOferta:
+            raise ActividadError(
+                "Las fechas de la actividad deben estar "
+                "dentro del periodo de la oferta"
+            )
+
+
     #HU3: añade una actividad a la oferta actual, con su periodicidad (horarios) y plazas.
     #horarios es una lista de tuplas (diaSemana, horaInicio, horaFin).
     def anadirActividad(self, idOferta, idModalidad, idNivel, fechaInicio, fechaFin, plazas, horarios):
         oferta = self.db.executeQuery("select * from Oferta where id = ?", idOferta)
         if not oferta:
             raise ActividadError(f"No existe la oferta {idOferta}")
+
+        self._validarFechas(idOferta, fechaInicio, fechaFin)
 
         if idModalidad not in self.MODALIDADES:
             raise ActividadError("Modalidad no válida")
@@ -68,16 +109,42 @@ class ActividadModel:
         if actividad is None:
             raise ActividadError(f"No existe la actividad {idActividad}")
 
+        self._validarFechas(
+            actividad["idOferta"],
+            fechaInicio,
+            fechaFin
+        )
+        
         if idModalidad not in self.MODALIDADES:
             raise ActividadError("Modalidad no válida")
         if idNivel not in self.NIVELES:
             raise ActividadError("Nivel no válido")
 
+                
         if plazas <= 0:
             raise ActividadError("Las plazas deben ser mayores que 0")
-        if plazas < plazasOcupadas:
+
+        # Consultar cuántas personas ocupan plaza realmente.
+        # CONFIRMADA y PENDIENTE_ACEPTACION ocupan plaza.
+        resultado = self.db.executeQuery(
+            """
+            SELECT COUNT(*) AS total
+            FROM Inscripcion
+            WHERE idActividad = ?
+            AND estado IN ('CONFIRMADA', 'PENDIENTE_ACEPTACION')
+            """,
+            idActividad
+        )
+
+        plazasOcupadasReales = resultado[0]["total"]
+
+        # Impedir reducir las plazas por debajo de las ocupadas.
+        if plazas < plazasOcupadasReales:
             raise ActividadError(
-                f"Las plazas ({plazas}) no pueden ser inferiores a las personas ya inscritas ({plazasOcupadas})")
+                f"Las plazas ({plazas}) no pueden ser inferiores "
+                f"a las personas ya inscritas ({plazasOcupadasReales})"
+            )
+
 
         if not horarios:
             raise ActividadError("Debe indicarse al menos un horario")
@@ -87,9 +154,42 @@ class ActividadModel:
             if not ('08:00' <= inicio < fin <= '22:00'):
                 raise ActividadError(f"Horario fuera de rango o incoherente: {inicio}-{fin}")
 
+
         idInstalacion = actividad["idInstalacion"]
+
         if idInstalacion is not None:
-            self._validarSinColision(idInstalacion, idActividad, fechaInicio, fechaFin, horarios)
+
+            # Consultar la capacidad máxima de la instalación
+            instalaciones = self.db.executeQuery(
+                "SELECT nombre, capacidad FROM Instalacion WHERE id = ?",
+                idInstalacion
+            )
+
+            if not instalaciones:
+                raise ActividadError(
+                    "La instalación asignada no existe"
+                )
+
+            instalacion = instalaciones[0]
+            capacidad = instalacion["capacidad"]
+
+            # Comprobar que las plazas no superan la capacidad
+            if plazas > capacidad:
+                raise ActividadError(
+                    f"La actividad tiene {plazas} plazas y "
+                    f"la instalación {instalacion['nombre']} "
+                    f"admite como máximo {capacidad}"
+                )
+
+            # Mantener la comprobación de colisiones
+            self._validarSinColision(
+                idInstalacion,
+                idActividad,
+                fechaInicio,
+                fechaFin,
+                horarios
+            )
+
 
         self.db.executeUpdateQuery(
             """update Actividad set idModalidad = ?, idNivel = ?, fechaInicio = ?, fechaFin = ?, plazas = ?
