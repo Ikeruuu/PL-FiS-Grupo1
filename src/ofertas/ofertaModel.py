@@ -14,25 +14,80 @@ class OfertaModel:
         self.db = Database(DB_PATH if db_path is None else db_path)
 
     #HU4: crea la oferta de un curso. Si no se indican fechas, usa octubre->junio del curso.
+
     def crearOferta(self, curso, fechaInicio=None, fechaFin=None):
         if not curso or not curso.strip():
             raise OfertaError("El curso es obligatorio")
 
-        if fechaInicio is None or fechaFin is None:
-            anioInicio = int(curso.split('-')[0])
-            fechaInicio = f"{anioInicio}-10-01"
-            fechaFin = f"{anioInicio + 1}-06-30"
+        curso = curso.strip()
 
+        
+        # Validar el formato del curso: AAAA-AAAA
+        import re
+
+        if not re.fullmatch(r"\d{4}-\d{4}", curso):
+            raise OfertaError(
+                "El curso debe tener formato AAAA-AAAA"
+            )
+
+        anioInicio, anioFin = map(int, curso.split("-"))
+
+        if anioFin != anioInicio + 1:
+            raise OfertaError(
+                "El segundo año del curso debe ser "
+                "el siguiente al primero"
+            )
+
+
+        # Comprobar si ya existe una oferta activa
         activas = self.db.executeQuery(
-            "select count(*) as n from Oferta where estado = 'ACTIVA'")
+            "SELECT COUNT(*) AS n FROM Oferta WHERE estado = 'ACTIVA'"
+        )
+
         if activas[0]["n"] > 0:
             raise OfertaError("Ya existe una oferta activa")
 
-        self.db.executeUpdateQuery(
-            "insert into Oferta (curso, fechaInicio, fechaFin, estado) values (?, ?, ?, 'ACTIVA')",
-            curso.strip(), fechaInicio, fechaFin)
+        # Proponer octubre-junio si no se indican fechas
+        if fechaInicio is None and fechaFin is None:
+            try:
+                anio = int(curso.split("-")[0])
+                fechaInicio = f"{anio}-10-01"
+                fechaFin = f"{anio + 1}-06-30"
+            except (ValueError, IndexError):
+                raise OfertaError("El formato del curso no es válido")
 
-        return f"Oferta {curso} creada ({fechaInicio} a {fechaFin})"
+        if not fechaInicio or not fechaFin:
+            raise OfertaError(
+                "Las fechas de inicio y fin son obligatorias"
+            )
+
+        # Comprobar fechas reales y formato
+        try:
+            inicio = datetime.date.fromisoformat(fechaInicio)
+            fin = datetime.date.fromisoformat(fechaFin)
+        except (ValueError, TypeError):
+            raise OfertaError(
+                "Las fechas deben tener formato AAAA-MM-DD y ser válidas"
+            )
+
+        if fin <= inicio:
+            raise OfertaError(
+                "La fecha de fin debe ser posterior a la de inicio"
+            )
+
+        # Guardar la nueva oferta
+        self.db.executeUpdateQuery(
+            """INSERT INTO Oferta
+            (curso, fechaInicio, fechaFin, estado)
+            VALUES (?, ?, ?, 'ACTIVA')""",
+            curso, inicio.isoformat(), fin.isoformat()
+        )
+
+        return (
+            f"Oferta {curso} creada "
+            f"({inicio.isoformat()} a {fin.isoformat()})"
+        )
+
 
     #HU2: define los periodos de inscripción de socios y no socios de una oferta.
 
