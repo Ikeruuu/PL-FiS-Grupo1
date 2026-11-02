@@ -15,31 +15,65 @@ class OfertaModel:
 
     #HU4: crea la oferta de un curso. Si no se indican fechas, usa octubre->junio del curso.
 
+
     def crearOferta(self, curso, fechaInicio=None, fechaFin=None):
+        import re
+        import datetime
+
+        # 1. Comprobar que se ha indicado el curso
         if not curso or not curso.strip():
             raise OfertaError("El curso es obligatorio")
 
         curso = curso.strip()
 
-        
-        # Validar el formato del curso: AAAA-AAAA
-        import re
+        # 2. Validar el formato del curso
+        # Se aceptan "2026" y "2026-2027"
+        if re.fullmatch(r"[0-9]{4}", curso):
+            anioInicio = int(curso)
+            anioFin = anioInicio + 1
 
-        if not re.fullmatch(r"\d{4}-\d{4}", curso):
+        elif re.fullmatch(r"[0-9]{4}-[0-9]{4}", curso):
+            anioInicio, anioFin = map(int, curso.split("-"))
+
+            if anioFin != anioInicio + 1:
+                raise OfertaError(
+                    "El segundo año del curso debe ser "
+                    "el siguiente al primero"
+                )
+        else:
             raise OfertaError(
-                "El curso debe tener formato AAAA-AAAA"
+                "El curso debe tener formato AAAA o AAAA-AAAA"
             )
 
-        anioInicio, anioFin = map(int, curso.split("-"))
+        # 3. Proponer fechas por defecto si no se indican
+        if fechaInicio is None and fechaFin is None:
+            fechaInicio = f"{anioInicio}-10-01"
+            fechaFin = f"{anioFin}-06-30"
 
-        if anioFin != anioInicio + 1:
+        # 4. Comprobar campos obligatorios
+        if not fechaInicio or not fechaFin:
             raise OfertaError(
-                "El segundo año del curso debe ser "
-                "el siguiente al primero"
+                "Las fechas de inicio y fin son obligatorias"
             )
 
+        # 5. Comprobar que las fechas son reales
+        try:
+            inicio = datetime.date.fromisoformat(fechaInicio)
+            fin = datetime.date.fromisoformat(fechaFin)
+        except (ValueError, TypeError):
+            raise OfertaError(
+                "Las fechas deben tener formato AAAA-MM-DD "
+                "y ser válidas"
+            )
 
-        # Comprobar si ya existe una oferta activa
+        # 6. La fecha final debe ser posterior a la inicial
+        if fin <= inicio:
+            raise OfertaError(
+                "La fecha de fin debe ser posterior "
+                "a la de inicio"
+            )
+
+        # 7. Comprobar que no existe otra oferta activa
         activas = self.db.executeQuery(
             "SELECT COUNT(*) AS n FROM Oferta WHERE estado = 'ACTIVA'"
         )
@@ -47,47 +81,23 @@ class OfertaModel:
         if activas[0]["n"] > 0:
             raise OfertaError("Ya existe una oferta activa")
 
-        # Proponer octubre-junio si no se indican fechas
-        if fechaInicio is None and fechaFin is None:
-            try:
-                anio = int(curso.split("-")[0])
-                fechaInicio = f"{anio}-10-01"
-                fechaFin = f"{anio + 1}-06-30"
-            except (ValueError, IndexError):
-                raise OfertaError("El formato del curso no es válido")
-
-        if not fechaInicio or not fechaFin:
-            raise OfertaError(
-                "Las fechas de inicio y fin son obligatorias"
-            )
-
-        # Comprobar fechas reales y formato
-        try:
-            inicio = datetime.date.fromisoformat(fechaInicio)
-            fin = datetime.date.fromisoformat(fechaFin)
-        except (ValueError, TypeError):
-            raise OfertaError(
-                "Las fechas deben tener formato AAAA-MM-DD y ser válidas"
-            )
-
-        if fin <= inicio:
-            raise OfertaError(
-                "La fecha de fin debe ser posterior a la de inicio"
-            )
-
-        # Guardar la nueva oferta
+        # 8. Guardar la nueva oferta
         self.db.executeUpdateQuery(
-            """INSERT INTO Oferta
+            """
+            INSERT INTO Oferta
             (curso, fechaInicio, fechaFin, estado)
-            VALUES (?, ?, ?, 'ACTIVA')""",
-            curso, inicio.isoformat(), fin.isoformat()
+            VALUES (?, ?, ?, 'ACTIVA')
+            """,
+            curso,
+            inicio.isoformat(),
+            fin.isoformat()
         )
 
+        # 9. Mostrar confirmación
         return (
             f"Oferta {curso} creada "
             f"({inicio.isoformat()} a {fin.isoformat()})"
         )
-
 
     #HU2: define los periodos de inscripción de socios y no socios de una oferta.
 

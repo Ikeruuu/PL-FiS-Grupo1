@@ -453,21 +453,41 @@ class PaginaOfertas(Pagina):
         self.finOferta = campo(fFinOferta, "Fin oferta (AAAA-MM-DD)")
 
         # Proponer fechas automáticamente a partir del curso
+
         def proponerFechasOferta(event=None):
+            import re
+
             curso = self.curso.get().strip()
-            try:
-                anio = int(curso.split("-")[0])
-                fechaInicio = f"{anio}-10-01"
-                fechaFin = f"{anio + 1}-06-30"
 
-                if not self.inicioOferta.get().strip():
-                    self.inicioOferta.insert(0, fechaInicio)
+            # Aceptar año solo o curso completo
+            if re.fullmatch(r"[0-9]{4}", curso):
+                anioInicio = int(curso)
+                anioFin = anioInicio + 1
 
-                if not self.finOferta.get().strip():
-                    self.finOferta.insert(0, fechaFin)
+            elif re.fullmatch(r"[0-9]{4}-[0-9]{4}", curso):
+                anioInicio, anioFin = map(int, curso.split("-"))
 
-            except ValueError:
-                pass
+                # No proponer fechas para un curso incoherente
+                if anioFin != anioInicio + 1:
+                    return
+
+            else:
+                return
+
+            # Fechas propuestas de octubre a junio
+            fechaInicio = f"{anioInicio}-10-01"
+            fechaFin = f"{anioFin}-06-30"
+
+            # Completar solo campos vacíos
+            # No sobrescribir fechas introducidas por el usuario
+            if not self.inicioOferta.get().strip():
+                self.inicioOferta.insert(0, fechaInicio)
+
+            if not self.finOferta.get().strip():
+                self.finOferta.insert(0, fechaFin)
+
+
+
 
         self.curso.bind("<FocusOut>", proponerFechasOferta)
 

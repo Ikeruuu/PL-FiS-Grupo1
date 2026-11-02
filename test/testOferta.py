@@ -27,6 +27,21 @@ class TestOferta(unittest.TestCase):
         oferta = self.model.getOfertaActiva()
         self.assertEqual(oferta["estado"], "ACTIVA")
 
+    def testCrearOfertaConAnioSolo(self):
+        resultado = self.model.crearOferta("2026")
+
+        self.assertIn("2026", resultado)
+
+        ofertas = self.model.db.executeQuery(
+            "SELECT curso, fechaInicio, fechaFin FROM Oferta "
+            "WHERE curso = ?",
+            "2026"
+        )
+
+        self.assertEqual(len(ofertas), 1)
+        self.assertEqual(ofertas[0]["fechaInicio"], "2026-10-01")
+        self.assertEqual(ofertas[0]["fechaFin"], "2027-06-30")
+
     #HU4 CA: no se puede crear una segunda oferta activa
     def testNoSePuedeCrearDosOfertasActivas(self):
         self.model.crearOferta('2026-2027')
