@@ -52,71 +52,110 @@ class ConsultaOfertaModel:
         dias.discard(())
         return sorted(dias)
 
-    def consultarOferta(self, idModalidad=None, idNivel=None, dias=None, hoy=None):
-        '''
-        Devuelve (lista, mensaje). lista contiene un dict por actividad; mensaje es None si hay
-        resultados o el texto a mostrar si no los hay. dias es una colección de días de la
-        semana (1=lunes ... 7=domingo) y selecciona las actividades con esa periodicidad exacta.
-        '''
-        todasFechas = isinstance(hoy, str) and hoy.upper() == "TODAS"
 
+    def consultarOferta(self, idModalidad=None, idNivel=None, dias=None, hoy=None):
+        """
+        Consulta las actividades de la oferta activa.
+
+        - hoy="TODAS": muestra todas las actividades, sin filtrar por fecha.
+        - hoy=None: utiliza la fecha actual.
+        - hoy="AAAA-MM-DD": consulta una fecha concreta.
+        """
+
+        # Comprobar si se quieren consultar todas las fechas
+        todasFechas = (
+            isinstance(hoy, str) and hoy.upper() == "TODAS"
+        )
+
+        # Preparar la fecha
         if todasFechas:
             hoy = datetime.date.today()
         else:
-            
-            todasFechas = isinstance(hoy, str) and hoy.upper() == "TODAS"
+            hoy = datetime.date.today() if hoy is None else hoy
 
-            if todasFechas:
-                hoy = datetime.date.today()
-            else:
-                hoy = datetime.date.today() if hoy is None else hoy
-                if isinstance(hoy, str):
-                    hoy = datetime.date.fromisoformat(hoy)
+            if isinstance(hoy, str):
+                hoy = datetime.date.fromisoformat(hoy)
 
-            dias = tuple(sorted(set(dias))) if dias else None
-
+        # Filtro opcional de periodicidad
+        dias = tuple(sorted(set(dias))) if dias else None
 
         with conectar(self.db_path) as conn:
-            oferta = conn.execute("select * from Oferta where estado = 'ACTIVA'").fetchone()
+
+            # Obtener la oferta activa
+            oferta = conn.execute(
+                "SELECT * FROM Oferta WHERE estado = 'ACTIVA'"
+            ).fetchone()
+
+            # Si no hay oferta activa, no hay actividades disponibles
             if oferta is None:
-                abierta = None
-            elif todasFechas:
+                return [], self.SIN_ABIERTAS
+
+            # Comprobar los periodos de inscripción
+            if todasFechas:
                 abierta = "según periodo"
             else:
-               
-                if oferta is None:
-                    return [], self.SIN_ABIERTAS
-
-                abierta = "según periodo" if todasFechas else self.abiertaPara(oferta, hoy)
+                abierta = self.abiertaPara(oferta, hoy)
 
                 if abierta is None:
                     return [], self.SIN_ABIERTAS
 
-
+            # Consultar las actividades
             actividades = conn.execute(
-                """select a.*, m.nombre as modalidad, n.nombre as nivel,
-                          ins.nombre as instalacion
-                   from Actividad a
-                   join Modalidad m on m.id = a.idModalidad
-                   join Nivel n on n.id = a.idNivel
-                   left join Instalacion ins on ins.id = a.idInstalacion
-                   
-                    where a.idOferta = ?
-                    and (? = 1 or a.fechaFin >= ?)
-                    order by m.nombre, a.idNivel, a.id""",
-                    (oferta["id"], int(todasFechas), hoy.isoformat())).fetchall()
-
+                """
+                SELECT
+                    a.*,
+                    m.nombre AS modalidad,
+                    n.nombre AS nivel,
+                    ins.nombre AS instalacion
+                FROM Actividad a
+                JOIN Modalidad m
+                    ON m.id = a.idModalidad
+                JOIN Nivel n
+                    ON n.id = a.idNivel
+                LEFT JOIN Instalacion ins
+                    ON ins.id = a.idInstalacion
+                WHERE a.idOferta = ?
+                AND (? = 1 OR a.fechaFin >= ?)
+                ORDER BY m.nombre, a.idNivel, a.id
+                """,
+                (
+                    oferta["id"],
+                    int(todasFechas),
+                    hoy.isoformat()
+                )
+            ).fetchall()
 
             resultado = []
+
             for a in actividades:
+
                 diasA = diasActividad(conn, a["id"])
-                if idModalidad is not None and a["idModalidad"] != idModalidad:
+
+                # Filtro de modalidad
+                if (
+                    idModalidad is not None
+                    and a["idModalidad"] != idModalidad
+                ):
                     continue
-                if idNivel is not None and a["idNivel"] != idNivel:
+
+                # Filtro de nivel
+                if (
+                    idNivel is not None
+                    and a["idNivel"] != idNivel
+                ):
                     continue
+
+                # Filtro de periodicidad
                 if dias is not None and diasA != dias:
                     continue
-                libres = max(a["plazas"] - plazasOcupadas(conn, a["id"]), 0)
+
+                # Calcular plazas libres
+                libres = max(
+                    a["plazas"] - plazasOcupadas(conn, a["id"]),
+                    0
+                )
+
+                # Añadir la actividad al resultado
                 resultado.append({
                     "id": a["id"],
                     "modalidad": a["modalidad"],
@@ -131,9 +170,12 @@ class ConsultaOfertaModel:
                     "abiertaPara": abierta,
                 })
 
+        # Comprobar si hay actividades
         if not resultado:
             return [], self.SIN_RESULTADOS
+
         return resultado, None
+
 
 
 #"30,00 €" o "No indicada"

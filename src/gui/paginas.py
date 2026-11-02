@@ -438,6 +438,40 @@ class PaginaOfertas(Pagina):
         ttk.Button(filaOferta, text="Crear oferta", style="Primario.TButton",
                    command=self.crearOferta).pack(side="left", padx=(8, 0), pady=(4, 0))
 
+        
+        # Fechas de inicio y fin de la oferta
+        filaFechasOferta = tk.Frame(ofertaCard, bg=e.TARJETA)
+        filaFechasOferta.pack(fill="x", pady=(2, 0))
+
+        fInicioOferta = tk.Frame(filaFechasOferta, bg=e.TARJETA)
+        fInicioOferta.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        fFinOferta = tk.Frame(filaFechasOferta, bg=e.TARJETA)
+        fFinOferta.pack(side="left", fill="x", expand=True, padx=(4, 0))
+
+        self.inicioOferta = campo(fInicioOferta, "Inicio oferta (AAAA-MM-DD)")
+        self.finOferta = campo(fFinOferta, "Fin oferta (AAAA-MM-DD)")
+
+        # Proponer fechas automáticamente a partir del curso
+        def proponerFechasOferta(event=None):
+            curso = self.curso.get().strip()
+            try:
+                anio = int(curso.split("-")[0])
+                fechaInicio = f"{anio}-10-01"
+                fechaFin = f"{anio + 1}-06-30"
+
+                if not self.inicioOferta.get().strip():
+                    self.inicioOferta.insert(0, fechaInicio)
+
+                if not self.finOferta.get().strip():
+                    self.finOferta.insert(0, fechaFin)
+
+            except ValueError:
+                pass
+
+        self.curso.bind("<FocusOut>", proponerFechasOferta)
+
+
         # Fila 2: Periodos de inscripción en GRID de 5 columnas (4 campos + 1 botón visible)
         filaPeriodos = tk.Frame(ofertaCard, bg=e.TARJETA)
         filaPeriodos.pack(fill="x", pady=(2, 0))
@@ -699,14 +733,37 @@ class PaginaOfertas(Pagina):
 
     def crearOferta(self):
         curso = self.curso.get().strip()
+        fechaInicio = self.inicioOferta.get().strip()
+        fechaFin = self.finOferta.get().strip()
+
+        if not curso:
+            self.aviso.mostrar("El curso es obligatorio", "error")
+            return
+
+        if not fechaInicio or not fechaFin:
+            self.aviso.mostrar(
+                "Las fechas de inicio y fin son obligatorias",
+                "error"
+            )
+            return
+
         try:
-            mensaje = self.app.ofertas.crearOferta(curso)
+            mensaje = self.app.ofertas.crearOferta(
+                curso,
+                fechaInicio,
+                fechaFin
+            )
         except OfertaError as error:
             self.aviso.mostrar(str(error), "error")
             return
+
         self.curso.delete(0, "end")
+        self.inicioOferta.delete(0, "end")
+        self.finOferta.delete(0, "end")
+
         self.refrescar()
         self.aviso.mostrar(mensaje, "ok")
+
 
     def definirPeriodos(self):
         if self.idOferta is None:

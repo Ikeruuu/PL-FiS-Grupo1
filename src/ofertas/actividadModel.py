@@ -126,6 +126,8 @@ class ActividadModel:
 
         # Consultar cuántas personas ocupan plaza realmente.
         # CONFIRMADA y PENDIENTE_ACEPTACION ocupan plaza.
+
+        # Consultar cuántas personas ocupan plaza realmente
         resultado = self.db.executeQuery(
             """
             SELECT COUNT(*) AS total
@@ -138,12 +140,15 @@ class ActividadModel:
 
         plazasOcupadasReales = resultado[0]["total"]
 
-        # Impedir reducir las plazas por debajo de las ocupadas.
-        if plazas < plazasOcupadasReales:
+        # Conservar compatibilidad con el parámetro usado por los tests
+        plazasOcupadas = max(plazasOcupadas, plazasOcupadasReales)
+
+        if plazas < plazasOcupadas:
             raise ActividadError(
                 f"Las plazas ({plazas}) no pueden ser inferiores "
-                f"a las personas ya inscritas ({plazasOcupadasReales})"
+                f"a las personas ya inscritas ({plazasOcupadas})"
             )
+
 
 
         if not horarios:
