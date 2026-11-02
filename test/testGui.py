@@ -227,6 +227,8 @@ class TestGui(unittest.TestCase):
         self._periodos()
         self.app.mostrar("ofertaDisponible")
         p = self.app.paginas["ofertaDisponible"]
+        p.todasFechas.set(False)
+        p.cambiarModoFecha()    
         p.fecha.delete(0, "end")
         p.fecha.insert(0, "2026-09-10")
         p.consultar()
@@ -244,11 +246,26 @@ class TestGui(unittest.TestCase):
         self.assertEqual(p.aviso.mensaje,
                          "Ninguna actividad abierta a inscripción cumple los filtros indicados")
 
+
     def testConsultaOfertaFueraDePlazo(self):
         self.app.mostrar("ofertaDisponible")
         p = self.app.paginas["ofertaDisponible"]
+
+        # Desactivar la consulta de todas las fechas
+        p.todasFechas.set(False)
+        p.cambiarModoFecha()
+
+        # Introducir una fecha fuera de los periodos
+        p.fecha.delete(0, "end")
+        p.fecha.insert(0, "2026-11-01")
+
         p.consultar()
-        self.assertEqual(p.aviso.mensaje, "No hay actividades abiertas a inscripción en este momento")
+
+        self.assertEqual(
+            p.aviso.mensaje,
+            "No hay actividades abiertas a inscripción en este momento"
+        )
+
 
     def testMisInscripciones(self):
         self._solicitud(1, 1, "CONFIRMADA")

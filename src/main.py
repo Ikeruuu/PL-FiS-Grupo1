@@ -44,8 +44,17 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     logger.info("Inicializando la base de datos %s", DB_PATH)
     db = Database(DB_PATH)
-    db.executeScript(SCHEMA_PATH)
-    db.executeScript(DATA_PATH)
+    
+    # Inicializar la base de datos solo la primera vez.
+    tablas = db.executeQuery(
+        "SELECT name FROM sqlite_master "
+        "WHERE type = 'table' AND name = 'Oferta'"
+    )
+
+    if not tablas:
+        db.executeScript(SCHEMA_PATH)
+        db.executeScript(DATA_PATH)
+
 
     if "--consola" in argv:
         menuConsola()
