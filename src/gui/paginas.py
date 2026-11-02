@@ -854,40 +854,32 @@ class PaginaOfertas(Pagina):
         if self.idOferta is None:
             self.aviso.mostrar("Primero crea la oferta del curso", "info")
             return
+
         try:
             idModalidad, idNivel, fechaInicio, fechaFin, plazas, horarios = self._leerFormulario()
         except ValueError:
-            self.aviso.mostrar("Revisa los campos numéricos (modalidad, nivel, plazas, día)", "error")
+            self.aviso.mostrar(
+                "Revisa los campos numéricos (modalidad, nivel, plazas, día)",
+                "error"
+            )
             return
 
-        
-        # HU 35331: conservar los demás horarios al modificar.
-        if self.idActividadSeleccionada is not None:
-            horariosOriginales = self.app.actividades.getHorarios(
-                self.idActividadSeleccionada
-            )
-
-            # El formulario edita el primer horario.
-            # Los demás deben conservarse.
-            for horario in horariosOriginales[1:]:
-                horarios.append((
-                    horario["diaSemana"],
-                    horario["horaInicio"],
-                    horario["horaFin"]
-                ))
-
-        
         try:
             if self.idActividadSeleccionada is None:
                 mensaje = self.app.actividades.anadirActividad(
-                    self.idOferta, idModalidad, idNivel, fechaInicio, fechaFin, plazas, horarios)
+                    self.idOferta, idModalidad, idNivel,
+                    fechaInicio, fechaFin, plazas, horarios
+                )
             else:
                 mensaje = self.app.actividades.modificarActividad(
-                    self.idActividadSeleccionada, idModalidad, idNivel, fechaInicio, fechaFin,
-                    plazas, horarios)
+                    self.idActividadSeleccionada, idModalidad, idNivel,
+                    fechaInicio, fechaFin, plazas, horarios
+                )
+
         except ActividadError as error:
             self.aviso.mostrar(str(error), "error")
             return
+
         self.refrescar()
         self.aviso.mostrar(mensaje, "ok")
 #--------------------------------------------------------------------------------------------
