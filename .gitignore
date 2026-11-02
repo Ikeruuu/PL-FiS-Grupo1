@@ -25,3 +25,10 @@ dist/
 .vscode
 !.vscode/
 !.vscode/launch.json
+
+
+# Base de datos local de demostracion
+database_demo.db
+database_demo.db-journal
+database_demo.db-wal
+database_demo.db-shm
