@@ -24,7 +24,9 @@ from src.ofertas.consultaOfertaModel import ConsultaOfertaModel
 from src.inscripciones.misInscripcionesModel import MisInscripcionesModel
 from src.inscripciones.cancelacionModel import CancelacionModel
 from src.gui.paginas import PaginaCancelar, PaginaConsultaOferta, PaginaMisInscripciones
-from src.gui.paginasOcupacionAsistencia import PaginaAsistencia, PaginaModalidades, PaginaOfertaAnterior
+from src.gui.paginasOcupacionAsistencia import (PaginaAsistencia, PaginaModalidades, PaginaOcupacionReal,
+                                                PaginaOfertaAnterior)
+from src.inscripciones.ocupacionRealModel import OcupacionRealModel
 from src.inscripciones.asistenciaModel import AsistenciaModel
 from src.ofertas.ofertaAnteriorModel import OfertaAnteriorModel
 from src.instalaciones.modalidadInstalacionModel import ModalidadInstalacionModel
@@ -43,7 +45,8 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("misInscripciones", "Mis inscripciones", PaginaMisInscripciones),
              ("cancelar", " Cancelar inscripción", PaginaCancelar),
              ("consultaInscritos", "Inscritos por actividad", PaginaConsultaInscritos),
-             ("asistencia", "Asistencia", PaginaAsistencia)]
+             ("asistencia", "Asistencia", PaginaAsistencia),
+             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal)]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -75,6 +78,7 @@ class CentroDeportivoApp(tk.Tk):
         self.modalidadesInstalacion = ModalidadInstalacionModel(db_path)
         self.ofertaAnterior = OfertaAnteriorModel(db_path)
         self.asistencia = AsistenciaModel(db_path)
+        self.ocupacionReal = OcupacionRealModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
