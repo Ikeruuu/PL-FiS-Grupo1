@@ -11,7 +11,7 @@ No modifica la base de datos habitual.
 import sqlite3
 from pathlib import Path
 
-from src.config import SCHEMA_PATH, DATA_PATH
+from src.config import SCHEMA_PATH, DATA_PATH, DATA_SPRINT2_PATH
 from src.gui.app import ejecutar
 
 
@@ -34,6 +34,7 @@ def preparar_base_demo():
             # Crear tablas y cargar datos iniciales
             schema = Path(SCHEMA_PATH).read_text(encoding="utf-8")
             datos = Path(DATA_PATH).read_text(encoding="utf-8")
+            datos += "\n" + Path(DATA_SPRINT2_PATH).read_text(encoding="utf-8")
 
             conn.executescript(schema)
             conn.executescript(datos)
