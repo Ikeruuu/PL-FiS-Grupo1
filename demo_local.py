@@ -34,7 +34,6 @@ def preparar_base_demo():
             # Crear tablas y cargar datos iniciales
             schema = Path(SCHEMA_PATH).read_text(encoding="utf-8")
             datos = Path(DATA_PATH).read_text(encoding="utf-8")
-            datos += "\n" + Path(DATA_SPRINT2_PATH).read_text(encoding="utf-8")
 
             conn.executescript(schema)
             conn.executescript(datos)
@@ -71,6 +70,13 @@ def preparar_base_demo():
                     finInscripcionNoSocios = '2026-12-15'
                 WHERE id = 1
                 """
+            )
+
+            # Datos de ejemplo del Sprint 2 (oferta anterior, asistencia...).
+            # Se cargan después de los ajustes anteriores para que estos solo
+            # afecten a las actividades de la oferta actual.
+            conn.executescript(
+                Path(DATA_SPRINT2_PATH).read_text(encoding="utf-8")
             )
 
             conn.commit()
