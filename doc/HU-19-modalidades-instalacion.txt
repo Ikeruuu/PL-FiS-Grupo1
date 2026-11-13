@@ -1,0 +1,29 @@
+HU19. Indicar las modalidades que admite cada instalación
+==========================================================
+Responsable: Iker Argüelles Eduarte · Rama: HU-19-modalidades-instalacion · Esfuerzo: 3
+Criterios validados por el Product Owner (Claudio de la Riva).
+
+Descripción: Como responsable de actividades, quiero indicar qué modalidades admite cada instalación
+para evitar asignar actividades a instalaciones que no sirven para ellas.
+
+Criterios de aceptación:
+1. Configuración inicial (validada): Piscina: natación; pistas de pádel: pádel; pista de tenis: tenis;
+   sala polivalente y gimnasio: pilates y acondicionamiento físico general. Se consulta y modifica.
+   Sin restricciones por nivel.
+2. Al asignar (HU3), si la instalación no admite la modalidad se avisa ("Piscina no admite Tenis.
+   ¿Asignar igualmente?") y se pide confirmación. Capacidad y colisión siguen bloqueando.
+3. En la pantalla de asignación, las instalaciones que no admiten la modalidad salen en naranja.
+4. Informe de asignaciones existentes que no cumplen la configuración (solo consulta).
+5. Al quitar una modalidad con actividades asignadas, se avisa de cuáles quedarían incoherentes y se
+   pide confirmación.
+6. Instalación o modalidad inexistentes: mensaje de error.
+
+Implementación:
+- resources/schema.sql y data.sql: tabla InstalacionModalidad con la configuración inicial.
+- src/instalaciones/modalidadInstalacionModel.py: configuración, actividades afectadas e informe.
+- src/instalaciones/instalacionModel.py: asignarInstalacion(..., confirmarModalidad) y ModalidadNoAdmitida.
+- src/gui/paginasOcupacionAsistencia.py: pantalla "Modalidades". src/gui/paginas.py: aviso en Asignar.
+- test/testModalidadInstalacion.py.
+
+Demo: Asignar instalación > actividad 8 (Tenis) > Piscina -> pide confirmación. Modalidades > Piscina >
+quitar Natación -> avisa de las actividades 2, 9 y 10.
