@@ -3,6 +3,7 @@ import logging
 from src.instalaciones.instalacionModel import (
     DIAS_SEMANA,
     AsignacionError,
+    ModalidadNoAdmitida,
     InstalacionModel,
     describirActividad,
     describirFranja,
@@ -81,6 +82,12 @@ class InstalacionView:
 
         try:
             print(self.model.asignarInstalacion(id_actividad, id_instalacion))
+        except ModalidadNoAdmitida as aviso:
+            #HU19: la instalación no admite la modalidad; el responsable decide
+            if input(f"{aviso} (s/n): ").strip().lower() == "s":
+                print(self.model.asignarInstalacion(id_actividad, id_instalacion, confirmarModalidad=True))
+            else:
+                print("Asignación cancelada")
         except AsignacionError as error:
             logger.warning("%s", error)
             print(error)

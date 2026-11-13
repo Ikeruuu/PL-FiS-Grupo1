@@ -12,6 +12,13 @@ class AsignacionError(Exception):
     '''
 
 
+class ModalidadNoAdmitida(AsignacionError):
+    '''
+    HU19: la instalación no admite la modalidad de la actividad. No es un error que bloquee:
+    el responsable puede confirmar la asignación (asignarInstalacion con confirmarModalidad=True).
+    '''
+
+
 class InstalacionModel:
     '''
     Objetos de negocio (model) de la HU3 "Asignar una instalación a una actividad".
@@ -54,7 +61,7 @@ class InstalacionModel:
     def getActividad(self, id_actividad):
         query = """select Actividad.id, Modalidad.nombre as modalidad, Nivel.nombre as nivel,
                           Actividad.fechaInicio, Actividad.fechaFin, Actividad.plazas,
-                          Actividad.idInstalacion
+                          Actividad.idInstalacion, Actividad.idModalidad
                    from Actividad
                    inner join Modalidad on Modalidad.id = Actividad.idModalidad
                    inner join Nivel on Nivel.id = Actividad.idNivel
@@ -91,9 +98,25 @@ class InstalacionModel:
                 """
         return self.db.executeQuery(query, id_instalacion, id_actividad)
 
+    #HU19: indica si la instalación admite la modalidad
+    def admiteModalidad(self, id_instalacion, id_modalidad):
+        res = self.db.executeQuery("""select 1 from InstalacionModalidad
+                                      where idInstalacion = ? and idModalidad = ?""",
+                                   id_instalacion, id_modalidad)
+        return len(res) > 0
+
+    #HU19: ids de las instalaciones que admiten la modalidad de la actividad indicada
+    def getInstalacionesCompatibles(self, id_actividad):
+        res = self.db.executeQuery("""select im.idInstalacion from InstalacionModalidad im
+                                      inner join Actividad a on a.idModalidad = im.idModalidad
+                                      where a.id = ?""", id_actividad)
+        return {r["idInstalacion"] for r in res}
+
     #Asigna la instalación a la actividad si se cumplen todas las reglas de la HU3.
     #Devuelve el mensaje de éxito o lanza AsignacionError con el motivo.
-    def asignarInstalacion(self, id_actividad, id_instalacion):
+    #HU19: si la instalación no admite la modalidad, lanza ModalidadNoAdmitida salvo que se
+    #confirme (confirmarModalidad=True). Capacidad y colisiones siguen bloqueando siempre.
+    def asignarInstalacion(self, id_actividad, id_instalacion, confirmarModalidad=False):
         actividad = self.getActividad(id_actividad)
         if actividad is None:
             raise AsignacionError(f"No existe la actividad {id_actividad}")
@@ -115,6 +138,10 @@ class InstalacionModel:
                                 f"{describirFranja(c)}" for c in colisiones)
             raise AsignacionError(
                 f"No se puede asignar {instalacion['nombre']}: está ocupada.\n{detalle}")
+
+        if not confirmarModalidad and not self.admiteModalidad(id_instalacion, actividad["idModalidad"]):
+            raise ModalidadNoAdmitida(
+                f"{instalacion['nombre']} no admite {actividad['modalidad']}. ¿Asignar igualmente?")
 
         query = "update Actividad set idInstalacion = ? where id = ? and idInstalacion is null"
         self.db.executeUpdateQuery(query, id_instalacion, id_actividad)

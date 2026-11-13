@@ -28,6 +28,8 @@ OCUPADA_FONDO = "#FDECEC"
 LIBRE_FONDO = "#EAF7EE"
 DIA_FONDO = "#EEF2F7"
 NO_CABE_TEXTO = "#A0AEC0"
+AVISO_TEXTO = "#C2410C"          #naranja: aviso que se puede confirmar
+AVISO_FONDO = "#FFEDD5"
 
 #Colores de las tarjetas de resumen (Inicio)
 COLORES_TARJETAS = ["#2563EB", "#16A34A", "#F59E0B", "#9333EA"]

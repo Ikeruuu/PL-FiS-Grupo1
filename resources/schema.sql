@@ -7,6 +7,7 @@ drop table if exists Persona;
 drop table if exists Horario;
 drop table if exists Actividad;
 drop table if exists Oferta;
+drop table if exists InstalacionModalidad;
 drop table if exists Instalacion;
 drop table if exists Nivel;
 drop table if exists Modalidad;
@@ -27,6 +28,13 @@ create table Nivel (id integer not null primary key, nombre varchar(20) not null
 create table Instalacion (id integer not null primary key, nombre varchar(40) not null unique,
                           capacidad integer not null, check (capacidad > 0)
                          );
+
+--HU19: modalidades que admite cada instalación (relación muchos a muchos)
+create table InstalacionModalidad (idInstalacion integer not null, idModalidad integer not null,
+                                   primary key (idInstalacion, idModalidad),
+                                   foreign key (idInstalacion) references Instalacion (id),
+                                   foreign key (idModalidad) references Modalidad (id)
+                                  );
 
 
 -- Oferta de actividades de un curso

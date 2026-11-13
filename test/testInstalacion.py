@@ -24,6 +24,7 @@ TEST_DATA = """
     insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas,idInstalacion) values(3,1,2,1,'2026-10-01','2026-12-31',12,2);
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(1,1,'18:00','19:00');
     insert into Horario(idActividad,diaSemana,horaInicio,horaFin) values(3,1,'09:00','10:00');
+    insert into InstalacionModalidad(idInstalacion,idModalidad) values(1,1),(1,2),(2,1),(2,2),(3,1),(3,2);
 """
 
 
@@ -170,7 +171,7 @@ class TestInstalacion(unittest.TestCase):
 
     def testVistaSinInstalaciones(self):
         self.db.executeScriptBatch(
-            "delete from Horario; delete from Actividad; delete from Instalacion;"
+            "delete from Horario; delete from Actividad; delete from InstalacionModalidad; delete from Instalacion;"
             "insert into Actividad(id,idOferta,idModalidad,idNivel,fechaInicio,fechaFin,plazas) "
             "values(10,1,1,1,'2026-10-01','2027-06-30',4);")
         view = InstalacionView(self.model)

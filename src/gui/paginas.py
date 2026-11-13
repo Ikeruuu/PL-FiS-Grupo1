@@ -18,6 +18,7 @@ from src.gui.componentes import Aviso, cabecera, campo, tabla, tarjeta
 from src.instalaciones.instalacionModel import (
     DIAS_SEMANA,
     AsignacionError,
+    ModalidadNoAdmitida,
     describirActividad,
     describirFranja,
 )
@@ -132,13 +133,16 @@ class PaginaAsignar(Pagina):
             ("capacidad", "Capacidad", 76, False)], altura=10)
         marco.pack(fill="both", expand=True)
         self.tablaInstalaciones.tag_configure("noCabe", foreground=e.NO_CABE_TEXTO)
+        #HU19: instalaciones que no admiten la modalidad de la actividad (se pueden elegir con confirmación)
+        self.tablaInstalaciones.tag_configure("noModalidad", foreground=e.AVISO_TEXTO)
 
         pie = ttk.Frame(self)
         pie.pack(fill="x", pady=(16, 0))
         self.boton = ttk.Button(pie, text="Asignar instalación", style="Primario.TButton",
                                 command=self.asignar)
         self.boton.pack(side="right")
-        ttk.Label(pie, text="Las instalaciones en gris no tienen capacidad suficiente para la actividad elegida.",
+        ttk.Label(pie, text="En gris: sin capacidad suficiente. En naranja: no admite la modalidad "
+                            "(se puede asignar confirmando).",
                   style="Subtitulo.TLabel").pack(side="left")
 
     def refrescar(self):
@@ -167,12 +171,16 @@ class PaginaAsignar(Pagina):
             self.capacidad[str(i["id"])] = i["capacidad"]
 
     #Marca en gris las instalaciones con menos capacidad que plazas tiene la actividad elegida
+    #y en naranja las que no admiten su modalidad (HU19)
     def _marcarCapacidad(self):
         sel = self.tablaActividades.selection()
         plazas = self.plazas.get(sel[0]) if sel else None
+        compatibles = self.app.instalaciones.getInstalacionesCompatibles(int(sel[0])) if sel else None
         for iid in self.tablaInstalaciones.get_children():
             noCabe = plazas is not None and self.capacidad[iid] < plazas
-            self.tablaInstalaciones.item(iid, tags=("noCabe",) if noCabe else ())
+            noModalidad = compatibles is not None and int(iid) not in compatibles
+            tags = ("noCabe",) if noCabe else ("noModalidad",) if noModalidad else ()
+            self.tablaInstalaciones.item(iid, tags=tags)
 
     def asignar(self):
         actividad = self.tablaActividades.selection()
@@ -181,7 +189,15 @@ class PaginaAsignar(Pagina):
             self.aviso.mostrar("Selecciona una actividad y una instalación", "info")
             return
         try:
-            mensaje = self.app.instalaciones.asignarInstalacion(int(actividad[0]), int(instalacion[0]))
+            try:
+                mensaje = self.app.instalaciones.asignarInstalacion(int(actividad[0]), int(instalacion[0]))
+            except ModalidadNoAdmitida as aviso:
+                #HU19: la instalación no admite la modalidad; el responsable confirma o cancela
+                if not self.app.confirmar("Modalidad no admitida", str(aviso)):
+                    self.aviso.mostrar("Asignación cancelada", "info")
+                    return
+                mensaje = self.app.instalaciones.asignarInstalacion(
+                    int(actividad[0]), int(instalacion[0]), confirmarModalidad=True)
         except AsignacionError as error:
             self.aviso.mostrar(str(error), "error")
             return

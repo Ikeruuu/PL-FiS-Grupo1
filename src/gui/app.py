@@ -5,6 +5,7 @@ barra lateral de navegación y área de contenido con una página por funcionali
 import logging
 import tkinter as tk
 from tkinter import font as tkfont
+from tkinter import messagebox
 
 from src.gui.paginas import PaginaConsultaInscritos
 from src.inscripciones.consultaInscritosModel import ConsultaInscritosModel
@@ -23,12 +24,15 @@ from src.ofertas.consultaOfertaModel import ConsultaOfertaModel
 from src.inscripciones.misInscripcionesModel import MisInscripcionesModel
 from src.inscripciones.cancelacionModel import CancelacionModel
 from src.gui.paginas import PaginaCancelar, PaginaConsultaOferta, PaginaMisInscripciones
+from src.gui.paginasOcupacionAsistencia import PaginaModalidades
+from src.instalaciones.modalidadInstalacionModel import ModalidadInstalacionModel
 
 logger = logging.getLogger(__name__)
 
 SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("asignar", "Asignar instalación", PaginaAsignar),
              ("ocupacion", "Ocupación", PaginaOcupacion),
+             ("modalidades", "Modalidades", PaginaModalidades),
              ("personas", "Personas", PaginaPersonas),
              ("ofertas", "Ofertas", PaginaOfertas),
              ("ofertaDisponible", "Oferta disponible", PaginaConsultaOferta),
@@ -44,7 +48,11 @@ class CentroDeportivoApp(tk.Tk):
         e.activarAltaResolucion()
         super().__init__()
         self.title("Centro Deportivo Inteligente")
-        self.state('zoomed')
+        try:
+            self.state('zoomed')
+        except tk.TclError:
+            #"zoomed" solo existe en Windows (y macOS); en Linux se usa el tamaño calculado
+            pass
         e.configurarEstilos(self)
         self._ajustarTamano()
         self.report_callback_exception = self._errorInesperado
@@ -60,6 +68,7 @@ class CentroDeportivoApp(tk.Tk):
         self.cancelaciones = CancelacionModel(db_path)
         self.listaEspera = ListaEsperaModel(db_path)
         self.consultaInscritos = ConsultaInscritosModel(db_path)
+        self.modalidadesInstalacion = ModalidadInstalacionModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
@@ -99,9 +108,11 @@ class CentroDeportivoApp(tk.Tk):
         tk.Label(lateral, text="MENÚ", bg=e.NAVY, fg="#7A8BA3", font=e.fuente(8, "bold"),
                  padx=margen).pack(anchor="w", pady=(e.px(8), e.px(6)))
         self.botones = {}
+        #Con muchas secciones los botones son más bajos para que el menú quepa en la ventana
+        altoBoton = e.px(11) if len(SECCIONES) <= 10 else e.px(6)
         for clave, texto, _ in SECCIONES:
             boton = tk.Label(lateral, text=texto, bg=e.NAVY, fg=e.TEXTO_LATERAL, anchor="w",
-                             font=e.fuente(11), padx=margen, pady=e.px(11), cursor="hand2")
+                             font=e.fuente(11), padx=margen, pady=altoBoton, cursor="hand2")
             boton.pack(fill="x")
             boton.bind("<Button-1>", lambda ev, c=clave: self.mostrar(c))
             boton.bind("<Enter>", lambda ev, c=clave: self._hover(c, True))
@@ -124,6 +135,10 @@ class CentroDeportivoApp(tk.Tk):
         pagina = self.paginas[clave]
         pagina.refrescar()
         pagina.pack(fill="both", expand=True)
+
+    #Pide confirmación al usuario (sí/no). Las pruebas la sustituyen para no abrir diálogos.
+    def confirmar(self, titulo, mensaje):
+        return messagebox.askyesno(titulo, mensaje, parent=self)
 
     #Los errores de base de datos se registran y se muestran sin cerrar la aplicación
     def _errorInesperado(self, tipo, valor, traza):
