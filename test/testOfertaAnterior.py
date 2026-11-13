@@ -46,7 +46,8 @@ class TestOfertaAnterior(BaseOfertaAnterior):
         self.assertEqual((actual["curso"], anterior["curso"]), ("2026-2027", "2025-2026"))
 
     def testSinOfertaAnterior(self):
-        self.db.executeScriptBatch("delete from Inscripcion; delete from Horario where idActividad > 10;"
+        self.db.executeScriptBatch("delete from Asistencia; delete from SesionCancelada; delete from Inscripcion;"
+                                   "delete from Horario where idActividad > 10;"
                                    "delete from Actividad where idOferta = 2; delete from Oferta where id = 2;")
         with self.assertRaisesRegex(OfertaAnteriorError, "No hay oferta de la temporada anterior"):
             self.model.comprobarDisponible(HOY)
@@ -161,6 +162,11 @@ class TestGuiOfertaAnterior(BaseOfertaAnterior):
         cls.app = CentroDeportivoApp(cls.dbApp)
         cls.addClassCleanup(cls.app.destroy)
         cls.app.withdraw()
+
+    def tearDown(self):
+        #Procesa los eventos pendientes antes de borrar la base de datos de la prueba
+        self.app.update()
+        super().tearDown()
 
     def setUp(self):
         super().setUp()

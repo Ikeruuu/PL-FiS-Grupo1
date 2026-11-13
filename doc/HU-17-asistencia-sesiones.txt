@@ -1,0 +1,26 @@
+HU17. Registrar y consultar la asistencia a cada sesión
+=======================================================
+Responsable: Iker Argüelles Eduarte · Rama: HU-17-asistencia-sesiones · Esfuerzo: 5
+Criterios validados por el Product Owner.
+
+Descripción: Como responsable de actividades o monitor, quiero registrar y consultar la asistencia a cada
+sesión para conocer el uso real de las actividades.
+
+Criterios de aceptación:
+1. Las sesiones son las fechas concretas del horario semanal dentro del periodo de la actividad.
+2. Solo sesiones de hoy o pasadas (las pasadas se pueden registrar tarde); las futuras no.
+3. Una sesión se puede cancelar por fuerza mayor: no se registra asistencia y no cuenta en las
+   estadísticas. La cancelación es definitiva.
+4. Actividad inexistente, sin sesiones todavía o sin inscritos: mensaje.
+5. Solo inscritos confirmados; ni lista de espera ni cancelados; no se puede añadir a no inscritos.
+6. Se marca solo si asistió (S/N) y se guarda todo junto; antes aparece "Sin registrar".
+7. Se puede corregir; se guarda la última versión.
+8. Consulta por sesión (asistentes, inscritos, %) y por actividad (estado de cada sesión y media).
+9. 0 asistentes = registrada con 0 %; una sesión cancelada no se puede registrar.
+
+Implementación:
+- resources/schema.sql: tablas Asistencia y SesionCancelada. Las sesiones no se guardan: se calculan.
+- src/inscripciones/asistenciaModel.py; pantalla "Asistencia" en src/gui/paginasOcupacionAsistencia.py.
+- resources/dataSprint2.sql: inscripciones y asistencia de ejemplo (octubre de 2026).
+- test/testAsistencia.py.
+Nota de interfaz: al abrir una sesión sin registrar se propone "Sí" para todos y se marca a quien faltó.
