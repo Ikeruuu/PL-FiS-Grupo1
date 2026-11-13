@@ -2,6 +2,8 @@
 
 drop table if exists Employee;
 drop table if exists Company;
+drop table if exists Asistencia;
+drop table if exists SesionCancelada;
 drop table if exists Inscripcion;
 drop table if exists Persona;
 drop table if exists Horario;
@@ -114,3 +116,20 @@ create table Inscripcion (
     )),
     check (estado != 'CONFIRMADA' or fechaInscripcion is not null)
 );
+
+--HU17: asistencia a cada sesión. Una sesión es una fecha concreta del horario semanal de la
+--actividad (no se guardan como tabla). Se guarda si cada inscrito asistió (S/N) y se puede corregir.
+create table Asistencia (idInscripcion integer not null, fecha varchar(10) not null,
+                         horaInicio varchar(5) not null, asistio integer not null,
+                         fechaRegistro varchar(26) not null,
+                         primary key (idInscripcion, fecha, horaInicio),
+                         foreign key (idInscripcion) references Inscripcion (id),
+                         check (asistio in (0, 1))
+                        );
+
+--HU17: sesiones canceladas por causa de fuerza mayor (la cancelación es definitiva)
+create table SesionCancelada (idActividad integer not null, fecha varchar(10) not null,
+                              horaInicio varchar(5) not null, fechaCancelacion varchar(26) not null,
+                              primary key (idActividad, fecha, horaInicio),
+                              foreign key (idActividad) references Actividad (id)
+                             );

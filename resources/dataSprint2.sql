@@ -1,5 +1,5 @@
 --Datos de ejemplo del Sprint 2 (bloque de ocupación de instalaciones y asistencia).
---Se cargan DESPUÉS de data.sql, solo en la aplicación (main.py y demo_local.py).
+--HU16, HU17 y HU18. Se cargan DESPUÉS de data.sql, solo en la aplicación (main.py y demo_local.py).
 --Están en un fichero aparte para no cambiar los datos que usan las pruebas de las demás historias.
 
 --HU16: oferta de la temporada anterior (inactiva) con actividades e inscripciones,
@@ -35,3 +35,68 @@ insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,es
 insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(7,14,'2025-09-06 11:00:00','2025-09-06 11:00:00','CONFIRMADA');
 insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(1,14,'2025-09-06 11:30:00','2025-09-06 11:30:00','CONFIRMADA');
 insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(2,14,'2025-09-07 11:30:00',null,'EN_ESPERA');
+
+--HU17 y HU18: inscripciones en la oferta actual y asistencia de algunas sesiones de octubre
+--Pádel medio (act. 1, 4 plazas): personas 1-4 inscritas y la 6 en espera
+--Natación iniciación (act. 2, 20 plazas): personas 1, 5, 6, 7 inscritas y la 4 cancelada
+--Pilates iniciación (act. 3, 12 plazas): personas 2, 3, 5, 6, 7 inscritas (asiste poca gente)
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(1,1,'2026-09-10 10:00:00','2026-09-10 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(2,1,'2026-09-11 10:00:00','2026-09-11 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(3,1,'2026-09-12 10:00:00','2026-09-12 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(4,1,'2026-09-13 10:00:00','2026-09-13 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(1,2,'2026-09-10 10:00:00','2026-09-10 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(5,2,'2026-09-11 10:00:00','2026-09-11 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(6,2,'2026-09-12 10:00:00','2026-09-12 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(7,2,'2026-09-13 10:00:00','2026-09-13 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(2,3,'2026-09-10 10:00:00','2026-09-10 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(3,3,'2026-09-11 10:00:00','2026-09-11 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(5,3,'2026-09-12 10:00:00','2026-09-12 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(6,3,'2026-09-13 10:00:00','2026-09-13 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(7,3,'2026-09-14 10:00:00','2026-09-14 10:00:00','CONFIRMADA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(6,1,'2026-09-15 10:00:00',null,'EN_ESPERA');
+insert into Inscripcion(idPersona,idActividad,fechaSolicitud,fechaInscripcion,estado) values(4,2,'2026-09-14 10:00:00','2026-09-14 10:00:00','CANCELADA');
+--Asistencia registrada (1 = asistió). La sesión de pádel del 14/10 se canceló por fuerza mayor.
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=1),'2026-10-05','18:00',1,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=1),'2026-10-05','18:00',1,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=1),'2026-10-05','18:00',1,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=4 and idActividad=1),'2026-10-05','18:00',1,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=1),'2026-10-07','18:00',1,'2026-10-07 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=1),'2026-10-07','18:00',1,'2026-10-07 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=1),'2026-10-07','18:00',1,'2026-10-07 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=4 and idActividad=1),'2026-10-07','18:00',0,'2026-10-07 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=1),'2026-10-12','18:00',1,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=1),'2026-10-12','18:00',1,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=1),'2026-10-12','18:00',1,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=4 and idActividad=1),'2026-10-12','18:00',1,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=1),'2026-10-19','18:00',1,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=1),'2026-10-19','18:00',0,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=1),'2026-10-19','18:00',1,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=4 and idActividad=1),'2026-10-19','18:00',1,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=2),'2026-10-06','10:00',1,'2026-10-06 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=5 and idActividad=2),'2026-10-06','10:00',1,'2026-10-06 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=2),'2026-10-06','10:00',1,'2026-10-06 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=2),'2026-10-06','10:00',1,'2026-10-06 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=2),'2026-10-08','10:00',1,'2026-10-08 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=5 and idActividad=2),'2026-10-08','10:00',1,'2026-10-08 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=2),'2026-10-08','10:00',0,'2026-10-08 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=2),'2026-10-08','10:00',1,'2026-10-08 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=1 and idActividad=2),'2026-10-13','10:00',1,'2026-10-13 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=5 and idActividad=2),'2026-10-13','10:00',1,'2026-10-13 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=2),'2026-10-13','10:00',1,'2026-10-13 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=2),'2026-10-13','10:00',1,'2026-10-13 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=3),'2026-10-05','09:00',0,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=3),'2026-10-05','09:00',0,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=5 and idActividad=3),'2026-10-05','09:00',0,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=3),'2026-10-05','09:00',1,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=3),'2026-10-05','09:00',1,'2026-10-05 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=3),'2026-10-12','09:00',1,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=3),'2026-10-12','09:00',0,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=5 and idActividad=3),'2026-10-12','09:00',0,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=3),'2026-10-12','09:00',1,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=3),'2026-10-12','09:00',0,'2026-10-12 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=2 and idActividad=3),'2026-10-19','09:00',0,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=3 and idActividad=3),'2026-10-19','09:00',0,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=5 and idActividad=3),'2026-10-19','09:00',0,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=3),'2026-10-19','09:00',0,'2026-10-19 20:00:00');
+insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=3),'2026-10-19','09:00',1,'2026-10-19 20:00:00');
+insert into SesionCancelada(idActividad,fecha,horaInicio,fechaCancelacion) values(1,'2026-10-14','18:00','2026-10-14 12:00:00');
