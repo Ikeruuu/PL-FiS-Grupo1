@@ -1,0 +1,23 @@
+HU18. Comparar la ocupación planificada con la real
+===================================================
+Responsable: Iker Argüelles Eduarte · Rama: HU-18-ocupacion-planificada-real · Esfuerzo: 5 (depende de HU17)
+Criterios validados por el Product Owner.
+
+Descripción: Como dirección, quiero comparar la ocupación planificada con la real para detectar plazas
+que no se aprovechan.
+
+Criterios de aceptación:
+1. Periodo (por defecto, el curso de la oferta activa) y filtros opcionales por instalación o actividad.
+2. Por actividad: plazas, inscritos (n y % sobre plazas), asistencia media (% sobre plazas y sobre
+   inscritos) y diferencia = (inscritos − asistencia media) / inscritos × 100.
+3. Inscritos en el momento de la consulta; las canceladas no cuentan.
+4. Solo sesiones con asistencia registrada (las canceladas no); se indica "8 de 12 sesiones".
+5. Se destacan las actividades con diferencia >= 50 % (umbral provisional, UMBRAL_DIFERENCIA).
+6. Sin sesiones registradas: "Sin datos" y fuera de los totales.
+7. Orden de mayor a menor diferencia y totales por instalación.
+8. 0 inscritos: 0 % de ocupación y "—" en lo que depende de los inscritos.
+Fuera de alcance: rentabilidad económica y exportación.
+
+Implementación: src/inscripciones/ocupacionRealModel.py (usa el resumen de asistencia de la HU17);
+pantalla "Ocupación real" en src/gui/paginasOcupacionAsistencia.py; test/testOcupacionReal.py.
+Demo: Pilates iniciación sale destacada (5 inscritos, media 1,7 asistentes: 67 %).

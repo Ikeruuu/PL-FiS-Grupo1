@@ -1,7 +1,7 @@
 '''
 Pantallas del bloque "Ocupación de instalaciones y asistencia" (Sprint 2):
-HU16 Añadir a la oferta actual una actividad de la oferta anterior, HU17 Asistencia a cada sesión
-y HU19 Modalidades por instalación.
+HU16 Añadir a la oferta actual una actividad de la oferta anterior, HU17 Asistencia a cada sesión,
+HU18 Ocupación planificada frente a real y HU19 Modalidades por instalación.
 '''
 import tkinter as tk
 from tkinter import ttk
@@ -17,9 +17,10 @@ from src.inscripciones.asistenciaModel import (
     AsistenciaError,
     describirFecha,
 )
+from src.inscripciones.ocupacionRealModel import UMBRAL_DIFERENCIA, OcupacionRealError
 from src.instalaciones.instalacionModel import DIAS_SEMANA, describirActividad
 from src.ofertas.ofertaAnteriorModel import OfertaAnteriorError, describirPeriodicidad
-from src.util.validation import ValidationError, validate_positive_int
+from src.util.validation import ValidationError, validate_date, validate_positive_int
 from src.instalaciones.modalidadInstalacionModel import (
     ConfirmacionRequerida,
     ModalidadInstalacionError,
@@ -431,3 +432,112 @@ class PaginaAsistencia(Pagina):
             return
         self._cargarSesiones()
         self.aviso.mostrar(mensaje, "ok")
+
+
+#--------------------------------------------------------------------------------------------
+def _pct(valor):
+    return "—" if valor is None else f"{valor} %"
+
+
+class PaginaOcupacionReal(Pagina):
+    '''HU18: comparar la ocupación planificada (inscritos) con la real (asistencia media).'''
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(self, "Ocupación planificada y real",
+                 "Compara los inscritos con la asistencia media para detectar plazas que no se aprovechan. "
+                 "Deja las fechas vacías para el curso completo.")
+        filtros = tarjeta(self, fill="x")
+        fila = tk.Frame(filtros, bg=e.TARJETA)
+        fila.pack(fill="x")
+        for i, (texto, peso) in enumerate((("Desde (AAAA-MM-DD)", 2), ("Hasta (AAAA-MM-DD)", 2),
+                                           ("Instalación", 3), ("Actividad", 3), ("", 0))):
+            fila.columnconfigure(i, weight=peso)
+            ttk.Label(fila, text=texto, style="Campo.TLabel").grid(row=0, column=i, sticky="w", padx=(0, 12))
+        self.desde = ttk.Entry(fila)
+        self.desde.grid(row=1, column=0, sticky="ew", padx=(0, 12))
+        self.hasta = ttk.Entry(fila)
+        self.hasta.grid(row=1, column=1, sticky="ew", padx=(0, 12))
+        self.comboInstalacion = ttk.Combobox(fila, state="readonly")
+        self.comboInstalacion.grid(row=1, column=2, sticky="ew", padx=(0, 12))
+        self.comboActividad = ttk.Combobox(fila, state="readonly")
+        self.comboActividad.grid(row=1, column=3, sticky="ew", padx=(0, 12))
+        ttk.Button(fila, text="Consultar", style="Primario.TButton",
+                   command=self.consultar).grid(row=1, column=4, sticky="e")
+
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(14, 0))
+
+        informe = tarjeta(self, fill="both", expand=True, pady=(14, 0))
+        self.titulo = ttk.Label(informe, text="Pulsa Consultar", style="Seccion.TLabel")
+        self.titulo.pack(anchor="w", pady=(0, 8))
+        marco, self.tablaInforme = tabla(informe, [
+            ("actividad", "Actividad", 170, True), ("instalacion", "Instalación", 130, True),
+            ("plazas", "Plazas", 55, False), ("inscritos", "Inscritos", 95, False),
+            ("realPlazas", "Real s/plazas", 95, False), ("realInscritos", "Real s/inscritos", 105, False),
+            ("diferencia", "Diferencia", 80, False), ("sesiones", "Sesiones", 95, False)], altura=8)
+        marco.pack(fill="both", expand=True)
+        self.tablaInforme.tag_configure("destacada", background=e.AVISO_FONDO, foreground=e.AVISO_TEXTO)
+        self.tablaInforme.tag_configure("sinDatos", foreground=e.NO_CABE_TEXTO)
+        tk.Label(informe, text=f"En naranja: diferencia igual o superior al {UMBRAL_DIFERENCIA} % "
+                               "(umbral provisional). Diferencia = (inscritos − asistencia media) / inscritos.",
+                 bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9)).pack(anchor="w", pady=(6, 10))
+        ttk.Label(informe, text="Totales por instalación", style="Seccion.TLabel").pack(anchor="w", pady=(0, 6))
+        marco, self.tablaTotales = tabla(informe, [
+            ("instalacion", "Instalación", 200, True), ("plazas", "Plazas", 70, False),
+            ("inscritos", "Inscritos", 110, False), ("real", "Asistencia media", 150, False),
+            ("diferencia", "Diferencia", 90, False)], altura=3)
+        marco.pack(fill="x")
+
+    def refrescar(self):
+        modelo = self.app.ocupacionReal
+        self.instalaciones = modelo.getInstalaciones()
+        self.actividades = modelo.getActividades()
+        self.comboInstalacion["values"] = ["Todas"] + [i["nombre"] for i in self.instalaciones]
+        self.comboActividad["values"] = ["Todas"] + [describirActividad(a) + f" ({a['id']})" for a in self.actividades]
+        if self.comboInstalacion.current() < 0:
+            self.comboInstalacion.current(0)
+        if self.comboActividad.current() < 0:
+            self.comboActividad.current(0)
+
+    def consultar(self):
+        self.aviso.ocultar()
+        try:
+            desde = validate_date(self.desde.get(), allow_empty=True)
+            hasta = validate_date(self.hasta.get(), allow_empty=True)
+        except ValidationError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        if (desde is None) != (hasta is None):
+            self.aviso.mostrar("Indica las dos fechas o ninguna (curso completo)", "info")
+            return
+        iInst, iAct = self.comboInstalacion.current(), self.comboActividad.current()
+        idInstalacion = self.instalaciones[iInst - 1]["id"] if iInst > 0 else None
+        idActividad = self.actividades[iAct - 1]["id"] if iAct > 0 else None
+        self.tablaInforme.delete(*self.tablaInforme.get_children())
+        self.tablaTotales.delete(*self.tablaTotales.get_children())
+        try:
+            res = self.app.ocupacionReal.getInforme(desde, hasta, idInstalacion, idActividad)
+        except OcupacionRealError as error:
+            self.titulo.configure(text="Sin resultados")
+            self.aviso.mostrar(str(error), "info")
+            return
+        self.titulo.configure(text=f"Del {res['desde']} al {res['hasta']}")
+        for f in res["actividades"]:
+            if f["sinDatos"]:
+                real = ("Sin datos", "—", "—")
+                tag = "sinDatos"
+            else:
+                real = (f"{_pct(f['realSobrePlazas'])} ({f['mediaAsistentes']:.1f})",
+                        _pct(f["realSobreInscritos"]), _pct(f["diferencia"]))
+                tag = "destacada" if f["destacada"] else ""
+            self.tablaInforme.insert("", "end", iid=str(f["id"]), tags=(tag,), values=(
+                describirActividad(f), f["instalacion"], f["plazas"],
+                f"{f['inscritos']} ({_pct(f['planificada'])})", *real,
+                f"{f['sesionesRegistradas']} de {f['sesionesTotales']}"))
+        for t in res["totales"]:
+            self.tablaTotales.insert("", "end", values=(
+                t["instalacion"], t["plazas"], f"{t['inscritos']} ({_pct(t['planificada'])})",
+                f"{t['mediaAsistentes']:.1f} ({_pct(t['realSobrePlazas'])})", _pct(t["diferencia"])))
+        if not res["totales"]:
+            self.aviso.mostrar("Ninguna actividad tiene sesiones con asistencia registrada en el periodo", "info")
