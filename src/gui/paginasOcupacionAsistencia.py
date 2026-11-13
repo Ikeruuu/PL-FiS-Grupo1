@@ -1,6 +1,7 @@
 '''
 Pantallas del bloque "Ocupación de instalaciones y asistencia" (Sprint 2):
-HU16 Añadir a la oferta actual una actividad de la oferta anterior y HU19 Modalidades por instalación.
+HU16 Añadir a la oferta actual una actividad de la oferta anterior, HU17 Asistencia a cada sesión
+y HU19 Modalidades por instalación.
 '''
 import tkinter as tk
 from tkinter import ttk
@@ -8,7 +9,15 @@ from tkinter import ttk
 from src.gui import estilos as e
 from src.gui.componentes import Aviso, cabecera, campo, tabla, tarjeta
 from src.gui.paginas import Pagina
-from src.instalaciones.instalacionModel import DIAS_SEMANA
+from src.inscripciones.asistenciaModel import (
+    CANCELADA,
+    FUTURA,
+    REGISTRADA,
+    SIN_REGISTRAR,
+    AsistenciaError,
+    describirFecha,
+)
+from src.instalaciones.instalacionModel import DIAS_SEMANA, describirActividad
 from src.ofertas.ofertaAnteriorModel import OfertaAnteriorError, describirPeriodicidad
 from src.util.validation import ValidationError, validate_positive_int
 from src.instalaciones.modalidadInstalacionModel import (
@@ -237,3 +246,188 @@ class PaginaOfertaAnterior(Pagina):
             self.aviso.mostrar(str(error), "error")
             return
         self.aviso.mostrar(resultado["mensaje"] + ". Asígnale una instalación en «Asignar instalación».", "ok")
+
+
+#--------------------------------------------------------------------------------------------
+class PaginaAsistencia(Pagina):
+    '''HU17: registrar y consultar la asistencia a cada sesión.'''
+
+    COLOR_ESTADO = {REGISTRADA: "registrada", SIN_REGISTRAR: "sinRegistrar", CANCELADA: "cancelada"}
+
+    def __init__(self, master, app):
+        super().__init__(master, app)
+        cabecera(self, "Asistencia",
+                 "Registra quién asiste a cada sesión (de hoy o pasadas) y consulta el uso real de la actividad")
+        self.aviso = Aviso(self)
+        self.aviso.pack(fill="x", pady=(0, 14))
+
+        fila = tk.Frame(self, bg=e.FONDO)
+        fila.pack(fill="x", pady=(0, 12))
+        ttk.Label(fila, text="Actividad").pack(side="left", padx=(0, 8))
+        self.combo = ttk.Combobox(fila, state="readonly", width=40)
+        self.combo.pack(side="left")
+        self.combo.bind("<<ComboboxSelected>>", lambda ev: self._cargarSesiones())
+        self.resumen = ttk.Label(fila, text="", style="Subtitulo.TLabel")
+        self.resumen.pack(side="left", padx=(16, 0))
+
+        cuerpo = ttk.Frame(self)
+        cuerpo.pack(fill="both", expand=True)
+        cuerpo.columnconfigure(0, weight=3)
+        cuerpo.columnconfigure(1, weight=2)
+        cuerpo.rowconfigure(0, weight=1)
+
+        izq = tarjeta(cuerpo)
+        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        ttk.Label(izq, text="Sesiones hasta hoy", style="Seccion.TLabel").pack(anchor="w", pady=(0, 10))
+        marco, self.tablaSesiones = tabla(izq, [
+            ("fecha", "Sesión", 200, True), ("horario", "Horario", 110, False),
+            ("estado", "Estado", 110, False), ("asistentes", "Asistentes", 90, False),
+            ("porcentaje", "%", 60, False)], altura=12)
+        marco.pack(fill="both", expand=True)
+        self.tablaSesiones.tag_configure("registrada", foreground=e.OK_TEXTO)
+        self.tablaSesiones.tag_configure("sinRegistrar", foreground=e.AVISO_TEXTO)
+        self.tablaSesiones.tag_configure("cancelada", foreground=e.NO_CABE_TEXTO)
+        self.tablaSesiones.bind("<<TreeviewSelect>>", lambda ev: self._cargarHoja())
+
+        der = tarjeta(cuerpo)
+        der.contenedor.grid(row=0, column=1, sticky="nsew")
+        self.tituloHoja = ttk.Label(der, text="Elige una sesión", style="Seccion.TLabel")
+        self.tituloHoja.pack(anchor="w")
+        tk.Label(der, text="Haz clic en una persona para cambiar si asistió", bg=e.TARJETA,
+                 fg=e.TEXTO_SUAVE, font=e.fuente(9)).pack(anchor="w", pady=(0, 8))
+        marco, self.tablaHoja = tabla(der, [("persona", "Inscrito", 200, True), ("asistio", "Asistió", 70, False)],
+                                      altura=8)
+        marco.pack(fill="both", expand=True)
+        self.tablaHoja.tag_configure("si", foreground=e.OK_TEXTO)
+        self.tablaHoja.tag_configure("no", foreground=e.ERROR_TEXTO)
+        self.tablaHoja.bind("<ButtonRelease-1>", self._clicHoja)
+        botones = tk.Frame(der, bg=e.TARJETA)
+        botones.pack(fill="x", pady=(12, 0))
+        self.botonCancelar = ttk.Button(botones, text="Cancelar sesión", style="Secundario.TButton",
+                                        command=self.cancelarSesion, state="disabled")
+        self.botonCancelar.pack(side="left")
+        self.botonGuardar = ttk.Button(botones, text="Guardar asistencia", style="Primario.TButton",
+                                       command=self.guardar, state="disabled")
+        self.botonGuardar.pack(side="right")
+        self.marcas = {}
+
+    def refrescar(self):
+        self.aviso.ocultar()
+        self.actividades = self.app.asistencia.getActividadesOfertaActiva()
+        self.combo["values"] = [f"{describirActividad(a)} (actividad {a['id']})" for a in self.actividades]
+        if not self.actividades:
+            self.aviso.mostrar("No hay actividades en la oferta activa", "info")
+        elif self.combo.current() >= 0:
+            self._cargarSesiones()
+
+    def _idActividad(self):
+        indice = self.combo.current()
+        return self.actividades[indice]["id"] if indice >= 0 else None
+
+    def _limpiarHoja(self):
+        self.tablaHoja.delete(*self.tablaHoja.get_children())
+        self.marcas = {}
+        self.tituloHoja.configure(text="Elige una sesión")
+        self.botonGuardar.configure(state="disabled")
+        self.botonCancelar.configure(state="disabled")
+
+    def _cargarSesiones(self):
+        self.tablaSesiones.delete(*self.tablaSesiones.get_children())
+        self._limpiarHoja()
+        idActividad = self._idActividad()
+        if idActividad is None:
+            return
+        try:
+            self.app.asistencia.getSesionesHastaHoy(idActividad)
+        except AsistenciaError as error:
+            self.resumen.configure(text="")
+            self.aviso.mostrar(str(error), "info")
+            return
+        r = self.app.asistencia.getResumen(idActividad)
+        for s in r["sesiones"]:
+            asistentes = f"{s['asistentes']} de {s['inscritos']}" if s["estado"] == REGISTRADA else "—"
+            pct = f"{s['porcentaje']} %" if s["porcentaje"] is not None else "—"
+            self.tablaSesiones.insert("", "end", iid=f"{s['fecha']}|{s['horaInicio']}",
+                                      tags=(self.COLOR_ESTADO.get(s["estado"], ""),), values=(
+                describirFecha(s["fecha"]), f"{s['horaInicio']}–{s['horaFin']}", s["estado"], asistentes, pct))
+        media = ("sin sesiones registradas" if r["mediaAsistentes"] is None
+                 else f"media de {r['mediaAsistentes']:.1f} asistentes ({r['mediaPorcentaje']} %)")
+        self.resumen.configure(text=f"{r['registradas']} de {r['totales']} sesiones registradas · {media}")
+
+    def _sesionElegida(self):
+        sel = self.tablaSesiones.selection()
+        return sel[0].split("|") if sel else (None, None)
+
+    def _cargarHoja(self):
+        self._limpiarHoja()
+        fecha, hora = self._sesionElegida()
+        if fecha is None:
+            return
+        idActividad = self._idActividad()
+        estado = self.tablaSesiones.item(f"{fecha}|{hora}", "values")[2]
+        self.tituloHoja.configure(text=f"{describirFecha(fecha)} {hora}")
+        if estado == CANCELADA:
+            self.aviso.mostrar("La sesión está cancelada: no se registra asistencia", "info")
+            return
+        self.botonCancelar.configure(state="normal" if estado == SIN_REGISTRAR else "disabled")
+        try:
+            hoja = self.app.asistencia.getHojaAsistencia(idActividad, fecha, hora)
+        except AsistenciaError as error:
+            self.aviso.mostrar(str(error), "info")
+            return
+        self.aviso.ocultar()
+        for p in hoja:
+            iid = str(p["idInscripcion"])
+            #Sin registrar se propone "Sí" para todos; se marca a quien no vino
+            self.marcas[iid] = True if p["asistio"] is None else p["asistio"]
+            self.tablaHoja.insert("", "end", iid=iid, values=(f"{p['nombre']} {p['apellidos']}", ""))
+            self._pintar(iid)
+        self.botonGuardar.configure(state="normal",
+                                    text="Corregir asistencia" if estado == REGISTRADA else "Guardar asistencia")
+
+    def _pintar(self, iid):
+        si = self.marcas[iid]
+        self.tablaHoja.set(iid, "asistio", "Sí" if si else "No")
+        self.tablaHoja.item(iid, tags=("si" if si else "no",))
+
+    def alternar(self, iid):
+        if iid in self.marcas:
+            self.marcas[iid] = not self.marcas[iid]
+            self._pintar(iid)
+
+    def _clicHoja(self, evento):
+        iid = self.tablaHoja.identify_row(evento.y)
+        if iid:
+            self.alternar(iid)
+
+    def guardar(self):
+        fecha, hora = self._sesionElegida()
+        if fecha is None:
+            self.aviso.mostrar("Elige una sesión", "info")
+            return
+        try:
+            mensaje = self.app.asistencia.registrarAsistencia(
+                self._idActividad(), fecha, hora, {int(i): v for i, v in self.marcas.items()})
+        except AsistenciaError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self._cargarSesiones()
+        self.tablaSesiones.selection_set(f"{fecha}|{hora}")
+        self._cargarHoja()
+        self.aviso.mostrar(mensaje, "ok")
+
+    def cancelarSesion(self):
+        fecha, hora = self._sesionElegida()
+        if fecha is None:
+            return
+        if not self.app.confirmar("Cancelar sesión",
+                                  f"¿Cancelar la sesión del {describirFecha(fecha)} {hora} por causa de fuerza "
+                                  "mayor? La cancelación es definitiva y no se registrará asistencia."):
+            return
+        try:
+            mensaje = self.app.asistencia.cancelarSesion(self._idActividad(), fecha, hora)
+        except AsistenciaError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self._cargarSesiones()
+        self.aviso.mostrar(mensaje, "ok")
