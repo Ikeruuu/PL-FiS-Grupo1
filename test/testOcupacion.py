@@ -168,7 +168,7 @@ class TestOcupacion(unittest.TestCase):
         self.assertEqual(lineas[-1], "No existe la instalación 99")
 
     def testVistaSinInstalaciones(self):
-        self.db.executeScriptBatch("delete from Horario; delete from Actividad; delete from Instalacion;")
+        self.db.executeScriptBatch("delete from Horario; delete from Actividad; delete from InstalacionModalidad; delete from Instalacion;")
         lineas = self.salida([])
         self.assertEqual(lineas, ["No hay instalaciones registradas"])
 
