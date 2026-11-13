@@ -32,6 +32,16 @@ insert into Instalacion(id,nombre,capacidad) values(3,'Gimnasio',20);
 insert into Instalacion(id,nombre,capacidad) values(4,'Pista de pádel 1',4);
 insert into Instalacion(id,nombre,capacidad) values(5,'Pista de pádel 2',4);
 insert into Instalacion(id,nombre,capacidad) values(6,'Pista de tenis',4);
+--InstalacionModalidad (HU19, validado por el PO): qué modalidades admite cada instalación
+--1 Natación, 2 Pilates, 3 Acondicionamiento físico general, 4 Pádel, 5 Tenis
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(1,1);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(2,2);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(2,3);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(3,2);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(3,3);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(4,4);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(5,4);
+insert into InstalacionModalidad(idInstalacion,idModalidad) values(6,5);
 -- Oferta 
 insert into Oferta (id,curso,fechaInicio,fechaFin,estado)
 values(1,'2026-2027','2026-10-01','2027-06-30','ACTIVA');
