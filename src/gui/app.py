@@ -24,7 +24,8 @@ from src.ofertas.consultaOfertaModel import ConsultaOfertaModel
 from src.inscripciones.misInscripcionesModel import MisInscripcionesModel
 from src.inscripciones.cancelacionModel import CancelacionModel
 from src.gui.paginas import PaginaCancelar, PaginaConsultaOferta, PaginaMisInscripciones
-from src.gui.paginasOcupacionAsistencia import PaginaModalidades
+from src.gui.paginasOcupacionAsistencia import PaginaModalidades, PaginaOfertaAnterior
+from src.ofertas.ofertaAnteriorModel import OfertaAnteriorModel
 from src.instalaciones.modalidadInstalacionModel import ModalidadInstalacionModel
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("modalidades", "Modalidades", PaginaModalidades),
              ("personas", "Personas", PaginaPersonas),
              ("ofertas", "Ofertas", PaginaOfertas),
+             ("ofertaAnterior", "Oferta anterior", PaginaOfertaAnterior),
              ("ofertaDisponible", "Oferta disponible", PaginaConsultaOferta),
              ("inscripciones", "Inscripciones", PaginaInscripciones),
              ("misInscripciones", "Mis inscripciones", PaginaMisInscripciones),
@@ -69,6 +71,7 @@ class CentroDeportivoApp(tk.Tk):
         self.listaEspera = ListaEsperaModel(db_path)
         self.consultaInscritos = ConsultaInscritosModel(db_path)
         self.modalidadesInstalacion = ModalidadInstalacionModel(db_path)
+        self.ofertaAnterior = OfertaAnteriorModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
@@ -156,7 +159,7 @@ def ejecutar(db_path=None):
     app.mainloop()
 
 if __name__ == '__main__':
-    from src.config import SCHEMA_PATH, DATA_PATH
+    from src.config import SCHEMA_PATH, DATA_PATH, DATA_SPRINT2_PATH
     from src.util.database import Database
 
     db_path = "database.db"
@@ -173,6 +176,7 @@ if __name__ == '__main__':
     if not tablas:
         db.executeScript(SCHEMA_PATH)
         db.executeScript(DATA_PATH)
+        db.executeScript(DATA_SPRINT2_PATH)
 
 
     # Iniciar la aplicación

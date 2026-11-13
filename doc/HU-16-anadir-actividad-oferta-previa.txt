@@ -1,0 +1,24 @@
+HU16. Añadir a la oferta actual una actividad de la oferta anterior
+====================================================================
+Responsable: Iker Argüelles Eduarte · Rama: HU-16-anadir-actividad-oferta-previa · Esfuerzo: 3
+Amplía "Añadir una actividad" (#35263). Criterios validados por el Product Owner.
+
+Descripción: Como responsable de actividades, quiero añadir a la oferta actual una actividad de la oferta
+de la temporada anterior, viendo la demanda que tuvo, para planificar la nueva oferta a partir de la previa.
+
+Criterios de aceptación:
+1. Solo antes de que se abran las inscripciones de la oferta activa.
+2. Se usa la oferta de la temporada anterior (la última inactiva que termina antes de la actual).
+3. Para cada actividad: modalidad, nivel, periodicidad, plazas, inscritos, lista de espera, % de
+   ocupación e instalación anterior como referencia. Sin inscripciones: "Sin datos".
+4. Al elegirla se precargan sus datos; se pueden cambiar plazas y periodicidad. Fechas = oferta actual.
+5. Mismas reglas que #35263 (se reutiliza ActividadModel.anadirActividad).
+6. Una actividad cada vez.
+7. Se registra sin instalación; la actividad anterior no se modifica.
+8. 0 inscritos -> 0 %; se puede añadir dos veces la misma.
+
+Implementación:
+- src/ofertas/ofertaAnteriorModel.py; pantalla "Oferta anterior" en src/gui/paginasOcupacionAsistencia.py.
+- resources/dataSprint2.sql: oferta 2025-2026 con actividades e inscripciones de ejemplo. Se carga después
+  de data.sql solo al arrancar la aplicación, para no cambiar los datos de las pruebas de otras historias.
+- test/testOfertaAnterior.py.

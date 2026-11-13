@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from src.config import DATA_PATH, DB_PATH, SCHEMA_PATH
+from src.config import DATA_PATH, DATA_SPRINT2_PATH, DB_PATH, SCHEMA_PATH
 from src.employees.employeeView import EmployeeView
 from src.instalaciones.instalacionView import InstalacionView
 from src.personas.personaView import PersonaView
@@ -54,6 +54,7 @@ def main(argv=None):
     if not tablas:
         db.executeScript(SCHEMA_PATH)
         db.executeScript(DATA_PATH)
+        db.executeScript(DATA_SPRINT2_PATH)
 
 
     if "--consola" in argv:
