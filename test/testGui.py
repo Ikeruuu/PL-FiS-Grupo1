@@ -114,6 +114,32 @@ class TestGui(unittest.TestCase):
             self.app.mostrar(clave)
             self.assertEqual(self.app.actual, clave)
 
+    def testMenuPermiteLlegarAlHistoricoEnVentanaBaja(self):
+        self.app.state("normal")
+        self.addCleanup(self.app.withdraw)
+        geometria = self.app.geometry()
+        minimo = self.app.minsize()
+        self.addCleanup(self.app.geometry, geometria)
+        self.addCleanup(self.app.minsize, *minimo)
+        self.app.minsize(1, 1)
+        self.app.geometry("1000x360")
+        self.app.update()
+
+        menu = self.app.menuLateral
+        boton = self.app.botones["historico"]
+        self.addCleanup(menu.yview_moveto, 0)
+        bordeInferior = menu.winfo_rooty() + menu.winfo_height()
+        self.assertGreater(boton.winfo_rooty(), bordeInferior)
+        for _ in SECCIONES:
+            if boton.winfo_rooty() + boton.winfo_height() <= bordeInferior:
+                break
+            menu.event_generate("<MouseWheel>", delta=-120)
+            self.app.update()
+        self.assertGreaterEqual(boton.winfo_rooty(), menu.winfo_rooty())
+        self.assertLessEqual(boton.winfo_rooty() + boton.winfo_height(), bordeInferior)
+        boton.event_generate("<Button-1>")
+        self.assertEqual(self.app.actual, "historico")
+
     def testAsignarColisionYExito(self):
         self.app.mostrar("asignar")
         p = self.app.paginas["asignar"]

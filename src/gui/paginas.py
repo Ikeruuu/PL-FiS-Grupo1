@@ -81,6 +81,8 @@ class PaginaInicio(Pagina):
                               ("Registrar o consultar personas", "personas")):
             ttk.Button(botones, text=texto, style="Secundario.TButton",
                        command=lambda p=pagina: app.mostrar(p)).pack(side="left", padx=(0, 10))
+        ttk.Button(accesos, text="Histórico de inscripciones", style="Secundario.TButton",
+                   command=lambda: app.mostrar("historico")).pack(anchor="w", pady=(10, 0))
 
         horario = tarjeta(self, fill="x", pady=(16, 0))
         ttk.Label(horario, text="Horario del centro", style="Seccion.TLabel").pack(anchor="w")
