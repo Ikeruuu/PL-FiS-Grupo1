@@ -60,44 +60,41 @@ class PestanaRemesa(ttk.Frame):
         self.app = pagina.app
         self.aviso = pagina.aviso
 
-        form = tarjeta(self, fill="x")
+        #Arriba el formulario y las remesas emitidas; debajo, los recibos de la remesa elegida
+        self.columnconfigure(0, weight=2)
+        self.columnconfigure(1, weight=3)
+        self.rowconfigure(1, weight=1)
+
+        form = tarjeta(self)
+        form.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=(0, 12))
         ttk.Label(form, text="Nueva remesa", style="Seccion.TLabel").pack(anchor="w")
         tk.Label(form, text="Un recibo por cada inscripción activa del mes, con la cuota mensual de "
                             "la actividad. Se pasa al cobro a principio de mes.",
-                 bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9)).pack(anchor="w")
-        fila = tk.Frame(form, bg=e.TARJETA)
-        fila.pack(fill="x")
-        marcoMes = tk.Frame(fila, bg=e.TARJETA)
-        marcoMes.pack(side="left")
-        self.mes = campo(marcoMes, "Mes (AAAA-MM)", ancho=14)
+                 bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9), justify="left",
+                 wraplength=e.px(240)).pack(anchor="w")
+        self.mes = campo(form, "Mes (AAAA-MM)", ancho=14)
         self.mes.bind("<Return>", lambda ev: self.emitir())
-        ttk.Button(fila, text="Emitir remesa", style="Primario.TButton",
-                   command=self.emitir).pack(side="left", anchor="s", padx=(14, 0))
+        ttk.Button(form, text="Emitir remesa", style="Primario.TButton",
+                   command=self.emitir).pack(anchor="w", pady=(12, 0))
 
-        cuerpo = ttk.Frame(self)
-        cuerpo.pack(fill="both", expand=True, pady=(14, 0))
-        cuerpo.columnconfigure(0, weight=2)
-        cuerpo.columnconfigure(1, weight=3)
-        cuerpo.rowconfigure(0, weight=1)
-
-        izq = tarjeta(cuerpo)
-        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        izq = tarjeta(self)
+        izq.contenedor.grid(row=0, column=1, sticky="nsew", pady=(0, 12))
         ttk.Label(izq, text="Remesas emitidas", style="Seccion.TLabel").pack(anchor="w", pady=(0, 10))
         marco, self.tablaRemesas = tabla(izq, [
-            ("mes", "Mes", 130, True), ("emision", "Emisión", 90, False),
+            ("mes", "Mes", 150, True), ("emision", "Emisión", 95, False),
             ("recibos", "Recibos", 70, False), ("total", "Importe", 100, False),
-            ("pendientes", "Pendientes", 85, False)], altura=8)
+            ("pendientes", "Pendientes del banco", 150, False)], altura=4)
         marco.pack(fill="both", expand=True)
         self.tablaRemesas.bind("<<TreeviewSelect>>", lambda ev: self._cargarRecibos())
 
-        der = tarjeta(cuerpo)
-        der.contenedor.grid(row=0, column=1, sticky="nsew")
+        der = tarjeta(self)
+        der.contenedor.grid(row=1, column=0, columnspan=2, sticky="nsew")
         self.tituloRecibos = ttk.Label(der, text="Elige una remesa", style="Seccion.TLabel")
         self.tituloRecibos.pack(anchor="w", pady=(0, 10))
         marco, self.tablaRecibos = tabla(der, [
-            ("id", "Recibo", 60, False), ("socio", "Socio", 200, True),
-            ("actividad", "Actividad", 160, True), ("importe", "Importe", 80, False),
-            ("estado", "Estado", 80, False)], altura=8)
+            ("id", "Recibo", 70, False), ("socio", "Socio", 260, True),
+            ("actividad", "Actividad", 200, True), ("importe", "Importe", 100, False),
+            ("estado", "Estado", 100, False)], altura=7)
         marco.pack(fill="both", expand=True)
         colorearEstados(self.tablaRecibos)
 
