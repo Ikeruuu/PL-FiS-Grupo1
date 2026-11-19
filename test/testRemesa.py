@@ -39,9 +39,11 @@ class BaseRecibos(unittest.TestCase):
         with open(os.path.join(self.carpeta, nombre), encoding="utf-8") as fichero:
             return fichero.read().splitlines()
 
-    def recibosDe(self, dni):
+    #Recibos de una persona en un mes (dataSprint2.sql ya trae la remesa de octubre de 2026)
+    def recibosDe(self, dni, mes="2026-11"):
         return self.db.executeQuery("""select r.* from Recibo r inner join Inscripcion i on i.id = r.idInscripcion
-                                       inner join Persona p on p.id = i.idPersona where p.dni = ?""", dni)
+                                       inner join Persona p on p.id = i.idPersona
+                                       where p.dni = ? and r.mes = ? order by r.id""", dni, mes)
 
 
 class TestComun(unittest.TestCase):
@@ -86,7 +88,7 @@ class TestEmitirRemesa(BaseRecibos):
         self.assertTrue(r["fichero"].endswith("remesa_2026-11.txt"))
         lineas = self.lineasFichero("remesa_2026-11.txt")
         self.assertEqual(len(lineas), 13)
-        idRecibo = self.recibosDe("10000001A")[0]["id"]
+        idRecibo = [r for r in self.recibosDe("10000001A") if r["importe"] == 30][0]["id"]
         self.assertIn(f"{idRecibo};10000001A;ES9121000418450200051332;30.00;"
                       "Cuota de noviembre de 2026 - Pádel medio", lineas)
 
@@ -107,8 +109,8 @@ class TestEmitirRemesa(BaseRecibos):
         self.remesas.emitirRemesa("2026-11")
         self.assertEqual(len(self.recibosDe("10000001A")), 2)
         self.db.executeUpdateQuery("update Inscripcion set cancelaDesde = '2026-11-01' where idPersona = 1 and idActividad = 1")
-        self.db.executeUpdateQuery("delete from Recibo")
-        self.db.executeUpdateQuery("delete from Remesa")
+        self.db.executeUpdateQuery("delete from Recibo where mes = '2026-11'")
+        self.db.executeUpdateQuery("delete from Remesa where mes = '2026-11'")
         self.remesas.emitirRemesa("2026-11")
         self.assertEqual(len(self.recibosDe("10000001A")), 1)
 
@@ -138,7 +140,7 @@ class TestEmitirRemesa(BaseRecibos):
         with self.assertRaises(ReciboError) as ctx:
             self.remesas.emitirRemesa("2026-11")
         self.assertEqual(str(ctx.exception), "La remesa de noviembre de 2026 ya está emitida")
-        self.assertEqual(len(self.db.executeQuery("select * from Recibo")), 13)
+        self.assertEqual(len(self.db.executeQuery("select * from Recibo where mes = '2026-11'")), 13)
 
     def testMesFuturo(self):
         with self.assertRaises(ReciboError) as ctx:
@@ -161,7 +163,7 @@ class TestEmitirRemesa(BaseRecibos):
             self.remesas.emitirRemesa("2026-08")
         self.assertEqual(str(ctx.exception), "No hay inscripciones activas en agosto de 2026")
         self.assertEqual(os.listdir(self.carpeta), [])
-        self.assertEqual(self.db.executeQuery("select * from Remesa"), [])
+        self.assertEqual(self.db.executeQuery("select * from Remesa where mes >= '2026-11' or mes = '2026-08'"), [])
 
     #A quien le falte la cuenta (o la actividad sin cuota) no se le incluye y se informa
     def testIncidencias(self):
@@ -176,8 +178,13 @@ class TestEmitirRemesa(BaseRecibos):
         previa = self.remesas.prepararRemesa("2026-11")
         self.assertEqual((len(previa["recibos"]), previa["total"]), (13, 320))
         self.assertIn("13 recibo(s) por 320,00 €", RemesaModel.describirPrevia(previa))
-        self.assertEqual(self.db.executeQuery("select * from Remesa"), [])
+        self.assertEqual(self.db.executeQuery("select * from Remesa where mes >= '2026-11' or mes = '2026-08'"), [])
         self.assertEqual(os.listdir(self.carpeta), [])
+
+    #La remesa de octubre de los datos de prueba ya está emitida
+    def testRemesaDeLosDatosDePrueba(self):
+        with self.assertRaises(ReciboError):
+            self.remesas.emitirRemesa("2026-10")
 
     def testListadoDeRemesas(self):
         self.remesas.emitirRemesa("2026-11")

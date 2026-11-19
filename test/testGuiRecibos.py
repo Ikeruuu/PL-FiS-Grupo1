@@ -13,6 +13,7 @@ try:
     from src.gui.app import CentroDeportivoApp
     from src.recibos.remesaModel import RemesaModel
     from src.recibos.resultadoBancoModel import ResultadoBancoModel
+    from src.recibos.consultaRecibosModel import ConsultaRecibosModel
     HAY_TK = True
 except ImportError:
     HAY_TK = False
@@ -58,6 +59,7 @@ class TestGuiRecibos(unittest.TestCase):
     def prepararModelos(self):
         self.app.remesas = RemesaModel(self.db_path, carpeta=self.carpeta, hoyFijo=HOY)
         self.app.resultadosBanco = ResultadoBancoModel(self.db_path, carpeta=self.carpeta, hoyFijo=HOY)
+        self.app.consultaRecibos = ConsultaRecibosModel(self.db_path)
 
     def testEmitirRemesaConConfirmacion(self):
         t = self.p.remesa
@@ -104,6 +106,26 @@ class TestGuiRecibos(unittest.TestCase):
         self.assertEqual(t.cifras.cget("text"), "10 cobrado(s) · 3 devuelto(s) · 1 erróneo(s)")
         filas = t.tablaErrores.get_children()
         self.assertEqual(t.tablaErrores.item(filas[0], "values")[1], "El recibo 999 no existe")
+
+    def testConsultarRecibosEIngresos(self):
+        self.p.pestanas.select(self.p.consulta)
+        self.app.update()
+        t = self.p.consulta
+        self.assertEqual(t.comboTemporada.get(), "2026-2027 (vigente)")
+        self.assertEqual(t.comboActividad.get(), "Todas")
+        filas = t.tablaResumen.get_children()
+        self.assertEqual(t.tablaResumen.item(filas[0], "values")[:2], ("Pádel medio", "120,00 €"))
+        self.assertEqual(t.tablaResumen.item("total", "values"),
+                         ("Total", "255,00 €", "20,00 €", "45,00 €"))
+        self.assertEqual(len(t.tablaRecibos.get_children()), 13)
+        t.comboEstado.current(3)
+        t.consultar()
+        self.assertEqual(len(t.tablaRecibos.get_children()), 2)
+        self.assertEqual(t.tablaResumen.item("total", "values")[1], "255,00 €")
+        t.comboTemporada.current(1)
+        t._cargarActividades()
+        t.consultar()
+        self.assertEqual(self.p.aviso.mensaje, "No hay recibos para los filtros seleccionados")
 
 
 if __name__ == '__main__':

@@ -46,7 +46,7 @@ class TestOfertaAnterior(BaseOfertaAnterior):
         self.assertEqual((actual["curso"], anterior["curso"]), ("2026-2027", "2025-2026"))
 
     def testSinOfertaAnterior(self):
-        self.db.executeScriptBatch("delete from Asistencia; delete from SesionCancelada; delete from Inscripcion;"
+        self.db.executeScriptBatch("delete from Recibo; delete from Remesa; delete from Asistencia; delete from SesionCancelada; delete from Inscripcion;"
                                    "delete from Horario where idActividad > 10;"
                                    "delete from Actividad where idOferta = 2; delete from Oferta where id = 2;")
         with self.assertRaisesRegex(OfertaAnteriorError, "No hay oferta de la temporada anterior"):

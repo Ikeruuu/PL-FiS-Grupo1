@@ -1,0 +1,33 @@
+HU15. Consultar los recibos y los ingresos por actividad
+========================================================
+Responsable: José María García Galán · Rama: HU-15-consultar-recibos · Esfuerzo: 3
+(usa los recibos de HU13 y los estados de HU14)
+Respuestas del Product Owner (Claudio de la Riva) incorporadas en la historia.
+
+Descripción: Como administración, quiero consultar los recibos y los ingresos por actividad para
+conocer su rentabilidad.
+
+Criterios de aceptación:
+1. Entrada: temporada (por defecto, la vigente), actividad (o «Todas») y estado del recibo (emitido,
+   cobrado, devuelto o «Todos»).
+2. Si no hay recibos con esos filtros: «No hay recibos para los filtros seleccionados».
+3. Listado de recibos: id, socio, actividad, importe, fecha de emisión y estado.
+4. Resumen por actividad con los ingresos (solo recibos cobrados), el importe pendiente (emitidos)
+   y el importe devuelto, con una fila de totales y ordenado por ingresos de mayor a menor.
+5. Un recibo pertenece a la temporada en la que se emitió.
+6. Con «Todas», una actividad sin recibos en la temporada aparece con todo a 0.
+7. El filtro de estado afecta al listado; el resumen muestra siempre las tres cantidades.
+Fuera de alcance: análisis de costes (la rentabilidad se mide solo con los ingresos) y exportación.
+
+Decisiones de implementación:
+- La temporada de un recibo es la de la oferta de su actividad: los recibos solo se emiten en los
+  meses en los que la actividad está en curso, que caen dentro de su temporada.
+- Datos de prueba (dataSprint2.sql): remesa de octubre de 2026 ya emitida y con el resultado del
+  banco importado (13 recibos: 255 € cobrados, 20 € pendientes y 45 € devueltos).
+
+Implementación:
+- src/recibos/consultaRecibosModel.py.
+- src/gui/paginasRecibos.py: pestaña «Recibos e ingresos» de la pantalla «Recibos».
+- resources/dataSprint2.sql: remesa de octubre de 2026 de ejemplo.
+- test/testConsultaRecibos.py y test/testGuiRecibos.py. En test/testOfertaAnterior.py se borran
+  también los recibos antes de borrar las inscripciones (si no, falla la clave ajena).
