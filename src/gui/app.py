@@ -30,6 +30,8 @@ from src.inscripciones.ocupacionRealModel import OcupacionRealModel
 from src.inscripciones.asistenciaModel import AsistenciaModel
 from src.ofertas.ofertaAnteriorModel import OfertaAnteriorModel
 from src.instalaciones.modalidadInstalacionModel import ModalidadInstalacionModel
+from src.gui.paginasRecibos import PaginaRecibos
+from src.recibos.remesaModel import RemesaModel
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +48,8 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("cancelar", " Cancelar inscripción", PaginaCancelar),
              ("consultaInscritos", "Inscritos por actividad", PaginaConsultaInscritos),
              ("asistencia", "Asistencia", PaginaAsistencia),
-             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal)]
+             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal),
+             ("recibos", "Recibos", PaginaRecibos)]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -79,6 +82,7 @@ class CentroDeportivoApp(tk.Tk):
         self.ofertaAnterior = OfertaAnteriorModel(db_path)
         self.asistencia = AsistenciaModel(db_path)
         self.ocupacionReal = OcupacionRealModel(db_path)
+        self.remesas = RemesaModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
