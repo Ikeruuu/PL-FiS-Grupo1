@@ -289,3 +289,29 @@ class HistoricoModel:
         except (sqlite3.DatabaseError, UnexpectedException) as error:
             raise HistoricoError("No se han podido guardar las inscripciones históricas.") from error
         return len(validacion.solicitudes), validacion.descartadas
+
+    def getTemporadas(self):
+        if not self.db.executeQuery("""
+            SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ActividadHistorica'
+        """):
+            return []
+        return [fila["temporada"] for fila in self.db.executeQuery("""
+            SELECT DISTINCT temporada FROM ActividadHistorica ORDER BY temporada DESC
+        """)]
+
+    def consultar(self, temporada, idModalidad=None, idNivel=None):
+        """Devuelve las plazas ofertadas y la demanda por categoría y nivel."""
+        if not temporada or temporada not in self.getTemporadas():
+            return []
+        return self.db.executeQuery("""
+            SELECT a.idModalidad, a.idNivel, m.nombre AS categoria, n.nombre AS nivel, a.plazas,
+                   COUNT(i.id) AS solicitudes,
+                   COUNT(CASE WHEN i.estado = 'CONFIRMADA' THEN 1 END) AS inscripciones
+            FROM ActividadHistorica a
+            JOIN Modalidad m ON m.id = a.idModalidad
+            JOIN Nivel n ON n.id = a.idNivel
+            LEFT JOIN InscripcionHistorica i ON i.idActividad = a.id
+            WHERE a.temporada = ? AND (? IS NULL OR a.idModalidad = ?) AND (? IS NULL OR a.idNivel = ?)
+            GROUP BY a.id
+            ORDER BY m.nombre COLLATE NOCASE, n.id
+        """, temporada, idModalidad, idModalidad, idNivel, idNivel)

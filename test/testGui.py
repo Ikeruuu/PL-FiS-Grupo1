@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from src.config import DATA_PATH, SCHEMA_PATH
@@ -74,6 +75,26 @@ class TestGui(unittest.TestCase):
         self.assertEqual(str(valores["instalaciones"][0].cget("text")), "6")
         self.assertEqual(str(valores["sinInstalacion"][0].cget("text")), "5")
         self.assertEqual(str(valores["socios"][0].cget("text")), "5")
+
+    def testHistoricoValidaImportaYConsulta(self):
+        self.app.mostrar("historico")
+        pagina = self.app.paginas["historico"]
+        self.assertIn("no hay temporadas", pagina.estadoConsulta.cget("text"))
+        ruta = Path(DATA_PATH).with_name("historico_ejemplo.csv")
+        with mock.patch("src.gui.paginaHistorico.filedialog.askopenfilename", return_value=str(ruta)):
+            pagina.validar()
+        self.assertIn("Filas válidas: 4", pagina.aviso.mensaje)
+        with mock.patch.object(self.app, "confirmar", side_effect=(False, True)):
+            pagina.importar()
+            self.assertEqual(self.app.historico.getTemporadas(), [])
+            pagina.importar()
+        self.assertIn("Filas importadas: 4", pagina.aviso.mensaje)
+        self.assertEqual(pagina.temporada.get(), "2024-2025")
+        self.assertEqual(len(pagina.resultados.get_children()), 2)
+        pagina.categoria.set("Pilates")
+        pagina._mostrarResultados()
+        fila, = pagina.resultados.get_children()
+        self.assertEqual(pagina.resultados.item(fila, "values")[0], "Pilates")
 
     #El nombre del centro y las opciones del menú caben enteros en la barra lateral
     def testNombreNoSeCorta(self):

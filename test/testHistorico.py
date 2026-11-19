@@ -68,3 +68,23 @@ class TestHistorico(unittest.TestCase):
         self.fichero("2024;Natación;Iniciación;10;2;;Confirmada;2024-09-10")
         with self.assertRaisesRegex(HistoricoError, "fichero ha cambiado"):
             self.modelo.importar(validacion)
+
+    def testConsultaTemporadasYFiltraLaDemanda(self):
+        self.assertEqual(self.modelo.getTemporadas(), [])
+        self.assertEqual(self.modelo.consultar("2024-2025"), [])
+        ruta = self.fichero(
+            "2023;Pilates;Medio;8;1;;Cancelada;2023-09-10",
+            "2024;Natación;Iniciación;10;1;;Confirmada;2024-09-10",
+            "2024;Natación;Iniciación;10;2;;En espera;2024-09-11",
+            "2024;Pilates;Medio;8;1;;Cancelada;2024-09-12",
+        )
+        self.modelo.importar(self.modelo.validar(ruta))
+        modelo = HistoricoModel(self.db.db_path)
+        self.assertEqual(modelo.getTemporadas(), ["2024-2025", "2023-2024"])
+        filas = modelo.consultar("2024-2025")
+        self.assertEqual([(f["categoria"], f["plazas"], f["solicitudes"], f["inscripciones"])
+                          for f in filas], [("Natación", 10, 2, 1), ("Pilates", 8, 1, 0)])
+        natacion, pilates = filas
+        self.assertEqual(modelo.consultar("2024-2025", idNivel=pilates["idNivel"]), [pilates])
+        self.assertEqual(modelo.consultar("2024-2025", idModalidad=natacion["idModalidad"]), [natacion])
+        self.assertEqual(modelo.consultar("2024-2025", natacion["idModalidad"], pilates["idNivel"]), [])
