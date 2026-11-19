@@ -5,7 +5,7 @@ barra lateral de navegación y área de contenido con una página por funcionali
 import logging
 import tkinter as tk
 from tkinter import font as tkfont
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 from src.gui.paginas import PaginaConsultaInscritos
 from src.inscripciones.consultaInscritosModel import ConsultaInscritosModel
@@ -13,6 +13,8 @@ from src.inscripciones.listaEsperaModel import ListaEsperaModel
 from src.gui.paginas import PaginaInscripciones
 from src.inscripciones.inscripcionModel import InscripcionModel
 from src.gui import estilos as e
+from src.gui.paginaHistorico import PaginaHistorico
+from src.inscripciones.historicoModel import HistoricoModel
 from src.gui.paginas import PaginaAsignar, PaginaInicio, PaginaOcupacion, PaginaPersonas, PaginaOfertas
 from src.instalaciones.instalacionModel import InstalacionModel
 from src.instalaciones.ocupacionModel import OcupacionModel
@@ -42,6 +44,7 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("ofertaAnterior", "Oferta anterior", PaginaOfertaAnterior),
              ("ofertaDisponible", "Oferta disponible", PaginaConsultaOferta),
              ("inscripciones", "Inscripciones", PaginaInscripciones),
+             ("historico", "Histórico de inscripciones", PaginaHistorico),
              ("misInscripciones", "Mis inscripciones", PaginaMisInscripciones),
              ("cancelar", " Cancelar inscripción", PaginaCancelar),
              ("consultaInscritos", "Inscritos por actividad", PaginaConsultaInscritos),
@@ -79,6 +82,7 @@ class CentroDeportivoApp(tk.Tk):
         self.ofertaAnterior = OfertaAnteriorModel(db_path)
         self.asistencia = AsistenciaModel(db_path)
         self.ocupacionReal = OcupacionRealModel(db_path)
+        self.historico = HistoricoModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
@@ -102,9 +106,21 @@ class CentroDeportivoApp(tk.Tk):
         textoMarca = tkfont.Font(font=e.fuente(14, "bold")).measure("Centro Deportivo")
         textoMenu = max(tkfont.Font(font=e.fuente(11, "bold")).measure(t) for _, t, _ in SECCIONES)
         ancho = max(e.px(230), textoMarca + 2 * margen + e.px(8), textoMenu + 2 * margen + e.px(8))
-        lateral = tk.Frame(self, bg=e.NAVY, width=ancho)
-        lateral.pack(side="left", fill="y")
-        lateral.pack_propagate(False)
+        barraLateral = tk.Frame(self, bg=e.NAVY)
+        barraLateral.pack(side="left", fill="y")
+        lienzo = tk.Canvas(barraLateral, width=ancho, bg=e.NAVY, highlightthickness=0,
+                           yscrollincrement=e.px(32))
+        desplazador = ttk.Scrollbar(barraLateral, orient="vertical", command=lienzo.yview)
+        desplazador.pack(side="right", fill="y")
+        lienzo.pack(side="left", fill="y")
+        lienzo.configure(yscrollcommand=desplazador.set)
+        self.menuLateral = lienzo
+
+        lateral = tk.Frame(lienzo, bg=e.NAVY, width=ancho)
+        lienzo.create_window(0, 0, window=lateral, anchor="nw", width=ancho)
+        lateral.bind("<Configure>", lambda evento: lienzo.configure(
+            scrollregion=(0, 0, evento.width, evento.height)
+        ))
 
         marca = tk.Frame(lateral, bg=e.NAVY, padx=margen, pady=e.px(26))
         marca.pack(fill="x")
@@ -131,6 +147,16 @@ class CentroDeportivoApp(tk.Tk):
 
         tk.Label(lateral, text="FIS · Curso 2026-27", bg=e.NAVY, fg="#7A8BA3",
                  font=e.fuente(8), padx=margen, pady=e.px(18)).pack(side="bottom", anchor="w")
+
+        def desplazarConRueda(evento):
+            if evento.delta:
+                direccion = -1 if evento.delta > 0 else 1
+                lienzo.yview_scroll(direccion * max(1, abs(evento.delta) // 120), "units")
+
+        for elemento in (lienzo, lateral, *marca.winfo_children(), *lateral.winfo_children()):
+            elemento.bind("<MouseWheel>", desplazarConRueda)
+            elemento.bind("<Button-4>", lambda evento: lienzo.yview_scroll(-1, "units"))
+            elemento.bind("<Button-5>", lambda evento: lienzo.yview_scroll(1, "units"))
 
     def _hover(self, clave, dentro):
         if clave != self.actual:

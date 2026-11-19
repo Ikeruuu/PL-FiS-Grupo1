@@ -1,0 +1,13 @@
+HU #36496. Validar un CSV de inscripciones históricas
+Responsable: Vladimir Iarunijchev
+Rama: HU-36496-validar-historico
+
+En Histórico de inscripciones, selecciona un CSV UTF-8. Se acepta coma o punto
+y coma como separador. El informe muestra las filas válidas y descartadas y
+detalla las incidencias con el número de línea. La validación solo lee los datos.
+
+El fichero contiene temporada, categoría, nivel, plazas, NSocio o identificación
+de no socio, estado y fecha. Cada fila identifica a la persona por uno de los dos
+campos. Se admite una temporada como 2024 o 2024-2025 y fechas como 2024-09-10 o
+10/09/2024. Se comprueban el catálogo, el estado, las plazas, la temporada
+anterior a la activa y los duplicados en el fichero.

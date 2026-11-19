@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from src.config import DATA_PATH, SCHEMA_PATH
@@ -75,6 +76,26 @@ class TestGui(unittest.TestCase):
         self.assertEqual(str(valores["sinInstalacion"][0].cget("text")), "5")
         self.assertEqual(str(valores["socios"][0].cget("text")), "5")
 
+    def testHistoricoValidaImportaYConsulta(self):
+        self.app.mostrar("historico")
+        pagina = self.app.paginas["historico"]
+        self.assertIn("no hay temporadas", pagina.estadoConsulta.cget("text"))
+        ruta = Path(DATA_PATH).with_name("historico_ejemplo.csv")
+        with mock.patch("src.gui.paginaHistorico.filedialog.askopenfilename", return_value=str(ruta)):
+            pagina.validar()
+        self.assertIn("Filas válidas: 4", pagina.aviso.mensaje)
+        with mock.patch.object(self.app, "confirmar", side_effect=(False, True)):
+            pagina.importar()
+            self.assertEqual(self.app.historico.getTemporadas(), [])
+            pagina.importar()
+        self.assertIn("Filas importadas: 4", pagina.aviso.mensaje)
+        self.assertEqual(pagina.temporada.get(), "2024-2025")
+        self.assertEqual(len(pagina.resultados.get_children()), 2)
+        pagina.categoria.set("Pilates")
+        pagina._mostrarResultados()
+        fila, = pagina.resultados.get_children()
+        self.assertEqual(pagina.resultados.item(fila, "values")[0], "Pilates")
+
     #El nombre del centro y las opciones del menú caben enteros en la barra lateral
     def testNombreNoSeCorta(self):
         self.app.update_idletasks()
@@ -92,6 +113,32 @@ class TestGui(unittest.TestCase):
                       "cancelar", "inicio"):
             self.app.mostrar(clave)
             self.assertEqual(self.app.actual, clave)
+
+    def testMenuPermiteLlegarAlHistoricoEnVentanaBaja(self):
+        self.app.state("normal")
+        self.addCleanup(self.app.withdraw)
+        geometria = self.app.geometry()
+        minimo = self.app.minsize()
+        self.addCleanup(self.app.geometry, geometria)
+        self.addCleanup(self.app.minsize, *minimo)
+        self.app.minsize(1, 1)
+        self.app.geometry("1000x360")
+        self.app.update()
+
+        menu = self.app.menuLateral
+        boton = self.app.botones["historico"]
+        self.addCleanup(menu.yview_moveto, 0)
+        bordeInferior = menu.winfo_rooty() + menu.winfo_height()
+        self.assertGreater(boton.winfo_rooty(), bordeInferior)
+        for _ in SECCIONES:
+            if boton.winfo_rooty() + boton.winfo_height() <= bordeInferior:
+                break
+            menu.event_generate("<MouseWheel>", delta=-120)
+            self.app.update()
+        self.assertGreaterEqual(boton.winfo_rooty(), menu.winfo_rooty())
+        self.assertLessEqual(boton.winfo_rooty() + boton.winfo_height(), bordeInferior)
+        boton.event_generate("<Button-1>")
+        self.assertEqual(self.app.actual, "historico")
 
     def testAsignarColisionYExito(self):
         self.app.mostrar("asignar")

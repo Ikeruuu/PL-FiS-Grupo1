@@ -1,0 +1,12 @@
+HU #36498. Consultar inscripciones históricas
+Responsable: Vladimir Iarunijchev
+Rama: HU-36498-consultar-historico
+Depende de la HU #36497.
+
+En Histórico de inscripciones, abre Consultar histórico y selecciona una
+temporada importada. Puedes filtrar por categoría y nivel. Para cada grupo
+se muestran las plazas ofertadas, el total de solicitudes con cualquier estado
+y el número de inscripciones que quedaron confirmadas.
+
+Las temporadas se ordenan de la más reciente a la más antigua. La pantalla
+indica si aún no hay temporadas importadas o si los filtros no devuelven filas.
