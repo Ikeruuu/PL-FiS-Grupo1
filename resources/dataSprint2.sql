@@ -100,3 +100,22 @@ insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) val
 insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=6 and idActividad=3),'2026-10-19','09:00',0,'2026-10-19 20:00:00');
 insert into Asistencia(idInscripcion,fecha,horaInicio,asistio,fechaRegistro) values((select id from Inscripcion where idPersona=7 and idActividad=3),'2026-10-19','09:00',1,'2026-10-19 20:00:00');
 insert into SesionCancelada(idActividad,fecha,horaInicio,fechaCancelacion) values(1,'2026-10-14','18:00','2026-10-14 12:00:00');
+
+--HU13, HU14 y HU15: remesa de octubre de 2026 ya emitida y con el resultado del banco importado,
+--para poder consultar los recibos y los ingresos por actividad (13 recibos, 320 €).
+--Pádel medio: 4 cobrados (120 €). Natación iniciación: 3 cobrados (75 €) y 1 devuelto (25 €).
+--Pilates iniciación: 3 cobrados (60 €), 1 devuelto (20 €) y 1 pendiente del banco (20 €).
+insert into Remesa(mes,fechaEmision,fichero) values('2026-10','2026-10-01','remesa_2026-10.txt');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(1,(select id from Inscripcion where idPersona=1 and idActividad=1),'2026-10',30,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(2,(select id from Inscripcion where idPersona=2 and idActividad=1),'2026-10',30,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(3,(select id from Inscripcion where idPersona=3 and idActividad=1),'2026-10',30,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(4,(select id from Inscripcion where idPersona=4 and idActividad=1),'2026-10',30,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(5,(select id from Inscripcion where idPersona=1 and idActividad=2),'2026-10',25,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(6,(select id from Inscripcion where idPersona=5 and idActividad=2),'2026-10',25,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(7,(select id from Inscripcion where idPersona=6 and idActividad=2),'2026-10',25,'DEVUELTO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(8,(select id from Inscripcion where idPersona=7 and idActividad=2),'2026-10',25,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(9,(select id from Inscripcion where idPersona=2 and idActividad=3),'2026-10',20,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(10,(select id from Inscripcion where idPersona=3 and idActividad=3),'2026-10',20,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(11,(select id from Inscripcion where idPersona=5 and idActividad=3),'2026-10',20,'EMITIDO',null);
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(12,(select id from Inscripcion where idPersona=6 and idActividad=3),'2026-10',20,'COBRADO','2026-10-08 10:00:00');
+insert into Recibo(id,idInscripcion,mes,importe,estado,fechaResultado) values(13,(select id from Inscripcion where idPersona=7 and idActividad=3),'2026-10',20,'DEVUELTO','2026-10-08 10:00:00');
