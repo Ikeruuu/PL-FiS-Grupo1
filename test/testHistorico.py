@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from src.config import DATA_PATH, SCHEMA_PATH
-from src.inscripciones.historicoModel import HistoricoModel
+from src.inscripciones.historicoModel import HistoricoError, HistoricoModel
 from src.util.database import Database
 
 
@@ -44,3 +44,27 @@ class TestHistorico(unittest.TestCase):
         self.assertFalse(resultado.solicitudes)
         self.assertEqual(resultado.descartadas, 1)
         self.assertTrue(all(i.linea == 1 for i in resultado.incidencias))
+
+    def testImportaFilasValidasYPersisteLosDatos(self):
+        ruta = self.fichero(
+            "2024;Natación;Iniciación;10;1;;Confirmada;2024-09-10",
+            "2024;Natación;Iniciación;10;2;;En espera;2024-09-12",
+            "2024;Natación;Iniciación;10;3;;Desconocido;2024-09-12",
+        )
+        validacion = self.modelo.validar(ruta)
+        antes = self.db.executeQuery("SELECT * FROM Inscripcion")
+        self.assertEqual(self.modelo.importar(validacion), (2, 1))
+        with self.assertRaisesRegex(HistoricoError, "Ya se importaron.*2024-2025"):
+            self.modelo.importar(validacion)
+        self.assertEqual(self.db.executeQuery("SELECT COUNT(*) AS total FROM ActividadHistorica"),
+                         [{"total": 1}])
+        self.assertEqual(self.db.executeQuery("SELECT COUNT(*) AS total FROM InscripcionHistorica"),
+                         [{"total": 2}])
+        self.assertEqual(self.db.executeQuery("SELECT * FROM Inscripcion"), antes)
+
+    def testExigeVolverAValidarSiCambiaElCSV(self):
+        ruta = self.fichero("2024;Natación;Iniciación;10;1;;Confirmada;2024-09-10")
+        validacion = self.modelo.validar(ruta)
+        self.fichero("2024;Natación;Iniciación;10;2;;Confirmada;2024-09-10")
+        with self.assertRaisesRegex(HistoricoError, "fichero ha cambiado"):
+            self.modelo.importar(validacion)

@@ -2,15 +2,18 @@
 import csv
 import hashlib
 import re
+import sqlite3
 import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime
 from io import StringIO
 from pathlib import Path
 
-from src.config import DB_PATH
+from src.config import DB_PATH, SCHEMA_HISTORICO_PATH
+from src.inscripciones.comun import conectar
 from src.personas.personaModel import normalizarDni
 from src.util.database import Database
+from src.util.unexpectedException import UnexpectedException
 
 
 class HistoricoError(Exception):
@@ -252,3 +255,37 @@ class HistoricoModel:
             return None, errores
         return Solicitud(f"{inicio:04d}-{inicio + 1:04d}", modalidad, nivel, plazas,
                          "SOCIO" if socio else "NO_SOCIO", socio or noSocio, estado, fecha.isoformat()), []
+
+    def importar(self, validacion):
+        """Importa el contenido validado en una transacción y devuelve (importadas, descartadas)."""
+        if not isinstance(validacion, ValidacionHistorica):
+            raise HistoricoError("Valida el fichero CSV antes de importarlo.")
+        if not validacion.solicitudes:
+            raise HistoricoError("El fichero validado no contiene registros válidos para importar.")
+        if hashlib.sha256(self._leer(validacion.ruta)).digest() != validacion.huella:
+            raise HistoricoError("El fichero ha cambiado. Vuelve a validarlo antes de importarlo.")
+
+        try:
+            self.db.executeScript(SCHEMA_HISTORICO_PATH)
+            with conectar(self.db.db_path) as conn, conn:
+                conn.execute("BEGIN IMMEDIATE")
+                temporadas = {s.temporada for s in validacion.solicitudes}
+                anteriores = {f[0] for f in conn.execute("SELECT DISTINCT temporada FROM ActividadHistorica")}
+                repetidas = sorted(temporadas & anteriores)
+                if repetidas:
+                    raise HistoricoError(f"Ya se importaron inscripciones de: {', '.join(repetidas)}.")
+                ids = {}
+                for s in validacion.solicitudes:
+                    actividad = (s.temporada, s.modalidad, s.nivel)
+                    if actividad not in ids:
+                        cursor = conn.execute("""
+                            INSERT INTO ActividadHistorica(temporada, idModalidad, idNivel, plazas)
+                            VALUES (?, ?, ?, ?)""", (*actividad, s.plazas))
+                        ids[actividad] = cursor.lastrowid
+                    conn.execute("""
+                        INSERT INTO InscripcionHistorica(idActividad, tipo, identificador, estado, fecha)
+                        VALUES (?, ?, ?, ?, ?)""",
+                                 (ids[actividad], s.tipo, s.identificador, s.estado, s.fecha))
+        except (sqlite3.DatabaseError, UnexpectedException) as error:
+            raise HistoricoError("No se han podido guardar las inscripciones históricas.") from error
+        return len(validacion.solicitudes), validacion.descartadas

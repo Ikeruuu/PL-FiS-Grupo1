@@ -1,0 +1,13 @@
+HU #36497. Importar inscripciones históricas
+Responsable: Vladimir Iarunijchev
+Rama: HU-36497-importar-historico
+Depende de la HU #36496.
+
+Tras validar el CSV, pulsa Importar filas válidas y confirma la operación.
+El resultado indica cuántas filas se guardaron y cuántas se descartaron.
+Si se modifica el CSV desde la validación, hay que validarlo de nuevo.
+Una temporada ya importada bloquea la operación completa. Las actividades
+y solicitudes históricas se guardan juntas en una transacción de SQLite,
+independientemente de las inscripciones de la oferta ordinaria.
+
+Fichero de ejemplo: resources/historico_ejemplo.csv
