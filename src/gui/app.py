@@ -13,6 +13,8 @@ from src.inscripciones.listaEsperaModel import ListaEsperaModel
 from src.gui.paginas import PaginaInscripciones
 from src.inscripciones.inscripcionModel import InscripcionModel
 from src.gui import estilos as e
+from src.gui.paginaHistorico import PaginaHistorico
+from src.inscripciones.historicoModel import HistoricoModel
 from src.gui.paginas import PaginaAsignar, PaginaInicio, PaginaOcupacion, PaginaPersonas, PaginaOfertas
 from src.instalaciones.instalacionModel import InstalacionModel
 from src.instalaciones.ocupacionModel import OcupacionModel
@@ -46,7 +48,8 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("cancelar", " Cancelar inscripción", PaginaCancelar),
              ("consultaInscritos", "Inscritos por actividad", PaginaConsultaInscritos),
              ("asistencia", "Asistencia", PaginaAsistencia),
-             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal)]
+             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal),
+             ("historico", "Histórico de inscripciones", PaginaHistorico)]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -79,6 +82,7 @@ class CentroDeportivoApp(tk.Tk):
         self.ofertaAnterior = OfertaAnteriorModel(db_path)
         self.asistencia = AsistenciaModel(db_path)
         self.ocupacionReal = OcupacionRealModel(db_path)
+        self.historico = HistoricoModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
