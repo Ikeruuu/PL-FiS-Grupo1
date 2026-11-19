@@ -167,6 +167,8 @@ class PestanaResultado(ttk.Frame):
         self.ayuda = tk.Label(form, bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9), justify="left",
                               anchor="w")
         self.ayuda.pack(fill="x")
+        #La ruta de la carpeta puede ser larga: el texto se ajusta al ancho disponible
+        self.ayuda.bind("<Configure>", lambda ev: self.ayuda.configure(wraplength=max(ev.width - e.px(10), e.px(200))))
         fila = tk.Frame(form, bg=e.TARJETA)
         fila.pack(fill="x")
         marcoMes = tk.Frame(fila, bg=e.TARJETA)
