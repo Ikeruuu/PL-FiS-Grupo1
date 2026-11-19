@@ -33,6 +33,7 @@ from src.instalaciones.modalidadInstalacionModel import ModalidadInstalacionMode
 from src.gui.paginasRecibos import PaginaRecibos
 from src.recibos.remesaModel import RemesaModel
 from src.recibos.resultadoBancoModel import ResultadoBancoModel
+from src.recibos.consultaRecibosModel import ConsultaRecibosModel
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ class CentroDeportivoApp(tk.Tk):
         self.ocupacionReal = OcupacionRealModel(db_path)
         self.remesas = RemesaModel(db_path)
         self.resultadosBanco = ResultadoBancoModel(db_path)
+        self.consultaRecibos = ConsultaRecibosModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)
