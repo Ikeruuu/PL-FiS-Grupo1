@@ -1,0 +1,44 @@
+HU13. Emitir la remesa mensual de recibos de las inscripciones
+===============================================================
+Responsable: José María García Galán · Rama: HU-13-emitir-remesa · Esfuerzo: 5
+Respuestas del Product Owner (Claudio de la Riva) incorporadas en la historia.
+
+Descripción: Como administración, quiero emitir la remesa mensual de recibos de las inscripciones
+para enviarla al banco y cobrarlas.
+
+Criterios de aceptación:
+1. Entrada: el mes (AAAA-MM). Si no se indica, el mes actual.
+2. No se puede emitir la remesa de un mes futuro ni dos veces la del mismo mes
+   («La remesa de noviembre de 2026 ya está emitida»).
+3. Si no hay inscripciones activas ese mes: «No hay inscripciones activas en <mes>» y no se genera
+   el fichero.
+4. Un recibo por inscripción activa del mes, con la cuota mensual de la actividad como importe (sin
+   prorrateo, aunque la actividad empiece o termine a mitad de mes). No entran las canceladas ni
+   las que ya tienen recibo ese mes.
+5. Cada recibo guarda identificador, socio, actividad, importe, fecha de emisión y estado
+   «emitido» (socio y actividad a través de la inscripción; la fecha, en la remesa).
+6. Fichero remesa_<mes>.txt (carpeta banco/) con una línea por recibo:
+   id;socio;cuenta;importe;concepto (socio = DNI, importe con dos decimales).
+7. Al terminar se muestra el número de recibos y el importe total.
+8. Cada socio tiene una cuenta bancaria obligatoria (columna cuentaBancaria de Persona, cargada en
+   los datos de prueba).
+
+Decisiones de implementación:
+- Inscripción activa en el mes: CONFIRMADA (las de lista de espera y pendientes de aceptar no
+  pagan), inscrita como muy tarde el último día del mes y con la actividad en curso ese mes. Una
+  inscripción cancelada a partir de un mes posterior (cancelaDesde, HU Cancelar inscripción) sigue
+  pagando hasta ese mes.
+- Antes de emitir se pide confirmación con el número de recibos y el total.
+- Si a una persona le falta la cuenta o la actividad no tiene cuota, no se incluye y se informa en
+  el resumen (con los datos de prueba no ocurre).
+
+Implementación:
+- resources/schema.sql: tablas Remesa y Recibo y columna cuentaBancaria en Persona.
+- resources/data.sql: cuentas bancarias de prueba.
+- src/config.py: BANCO_DIR (carpeta banco/, ignorada en Git).
+- src/recibos/comun.py y src/recibos/remesaModel.py.
+- src/gui/paginasRecibos.py: pantalla «Recibos», pestaña «Emitir remesa».
+- test/testRemesa.py y test/testGuiRecibos.py.
+
+Nota: la base de datos local solo se crea la primera vez. Para tener las tablas nuevas hay que
+borrar CompanyDB.db (y database_demo.db) antes de arrancar.

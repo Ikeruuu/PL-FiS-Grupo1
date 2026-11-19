@@ -19,6 +19,7 @@ SampleProject
 │   ├── personas/      HU8 Gestionar los datos de personas (modelo y vista)
 │   ├── ofertas/       Oferta, actividades y consulta de la oferta disponible
 │   ├── inscripciones/ Inscribirse, consultar mis inscripciones y cancelar
+│   ├── recibos/       HU13-HU15 Remesa mensual, resultado del banco y consulta de recibos
 │   ├── gui/           Interfaz gráfica (Tkinter): ventana principal y pantallas
 │   └── util/          Acceso a datos, validaciones y excepciones
 └── test/              Tests unitarios (unittest / pytest)
@@ -73,6 +74,9 @@ Además, **Oferta disponible** (consultar la oferta abierta a inscripción con f
 **Mis inscripciones** (estado de todas las inscripciones de una persona) y **Cancelar
 inscripción** (con confirmación y plazos). Ver `doc/HU-consultar-oferta.txt`,
 `doc/HU-mis-inscripciones.txt` y `doc/HU-cancelar-inscripcion.txt`.
+
+**Recibos** (control económico, Sprint 2): emitir la remesa mensual de recibos (HU13). Los ficheros
+que se intercambian con el banco se guardan en la carpeta `banco/`. Ver `doc/HU-13-emitir-remesa.txt`.
 
 > Nota: en cada arranque se **borra y recrea** el esquema y se recargan los datos
 > iniciales (fíjate en `src/main.py`). En consola, el menú principal se cierra con la opción 0.
