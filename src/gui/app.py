@@ -32,6 +32,7 @@ from src.ofertas.ofertaAnteriorModel import OfertaAnteriorModel
 from src.instalaciones.modalidadInstalacionModel import ModalidadInstalacionModel
 from src.gui.paginasRecibos import PaginaRecibos
 from src.recibos.remesaModel import RemesaModel
+from src.recibos.resultadoBancoModel import ResultadoBancoModel
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ class CentroDeportivoApp(tk.Tk):
         self.asistencia = AsistenciaModel(db_path)
         self.ocupacionReal = OcupacionRealModel(db_path)
         self.remesas = RemesaModel(db_path)
+        self.resultadosBanco = ResultadoBancoModel(db_path)
 
         self._crearLateral()
         self.contenido = tk.Frame(self, bg=e.FONDO)

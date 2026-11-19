@@ -1,6 +1,6 @@
 '''
 Pantalla «Recibos» del bloque de control económico (Sprint 2). Tiene una pestaña por historia:
-HU13 Emitir la remesa mensual de recibos.
+HU13 Emitir la remesa mensual de recibos y HU14 Importar el resultado del banco.
 '''
 import tkinter as tk
 from tkinter import ttk
@@ -9,7 +9,6 @@ from src.gui import estilos as e
 from src.gui.componentes import Aviso, cabecera, campo, tabla, tarjeta
 from src.gui.paginas import Pagina
 from src.recibos.comun import ReciboError, describirActividad, describirImporte, nombreMes
-from src.recibos.remesaModel import RemesaModel
 
 #Texto de cada estado en pantalla
 TEXTO_ESTADO = {"EMITIDO": "Emitido", "COBRADO": "Cobrado", "DEVUELTO": "Devuelto"}
@@ -35,7 +34,7 @@ class PaginaRecibos(Pagina):
     def __init__(self, master, app):
         super().__init__(master, app)
         cabecera(self, "Recibos",
-                 "Emite la remesa mensual de recibos de las inscripciones para cobrarla en el banco")
+                 "Emite la remesa mensual de recibos e importa el resultado del banco")
         self.aviso = Aviso(self)
         self.aviso.pack(fill="x", pady=(0, 14))
         configurarPestanas(self)
@@ -43,6 +42,8 @@ class PaginaRecibos(Pagina):
         self.pestanas.pack(fill="both", expand=True)
         self.remesa = PestanaRemesa(self.pestanas, self)
         self.pestanas.add(self.remesa, text="Emitir remesa")
+        self.resultado = PestanaResultado(self.pestanas, self)
+        self.pestanas.add(self.resultado, text="Resultado del banco")
         self.pestanas.bind("<<NotebookTabChanged>>", lambda ev: self.refrescar())
 
     def refrescar(self):
@@ -150,3 +151,78 @@ class PestanaRemesa(ttk.Frame):
         self.tablaRemesas.selection_set(resultado["mes"])
         self._cargarRecibos()
         self.aviso.mostrar(resultado["mensaje"], "ok")
+
+
+#--------------------------------------------------------------------------------------------
+class PestanaResultado(ttk.Frame):
+    '''HU14: importar el resultado del banco y ver el resumen con los errores.'''
+
+    def __init__(self, master, pagina):
+        super().__init__(master, padding=(0, e.px(14), 0, 0))
+        self.app = pagina.app
+        self.aviso = pagina.aviso
+
+        form = tarjeta(self, fill="x")
+        ttk.Label(form, text="Importar el resultado del banco", style="Seccion.TLabel").pack(anchor="w")
+        self.ayuda = tk.Label(form, bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9), justify="left",
+                              anchor="w")
+        self.ayuda.pack(fill="x")
+        fila = tk.Frame(form, bg=e.TARJETA)
+        fila.pack(fill="x")
+        marcoMes = tk.Frame(fila, bg=e.TARJETA)
+        marcoMes.pack(side="left")
+        self.mes = campo(marcoMes, "Mes de la remesa (AAAA-MM)", ancho=14)
+        self.mes.bind("<Return>", lambda ev: self.importar())
+        ttk.Button(fila, text="Importar resultado", style="Primario.TButton",
+                   command=self.importar).pack(side="left", anchor="s", padx=(14, 0))
+        ttk.Button(fila, text="Generar fichero de prueba", style="Secundario.TButton",
+                   command=self.generarPrueba).pack(side="right", anchor="s")
+
+        resumen = tarjeta(self, fill="both", expand=True, pady=(14, 0))
+        self.tituloResumen = ttk.Label(resumen, text="Resumen de la importación", style="Seccion.TLabel")
+        self.tituloResumen.pack(anchor="w")
+        self.cifras = tk.Label(resumen, text="Todavía no se ha importado ningún fichero", bg=e.TARJETA,
+                               fg=e.TEXTO_SUAVE, anchor="w", font=e.fuente(10))
+        self.cifras.pack(fill="x", pady=(2, 10))
+        marco, self.tablaErrores = tabla(resumen, [("linea", "Línea", 70, False),
+                                                   ("motivo", "Motivo del error", 500, True)], altura=8)
+        marco.pack(fill="both", expand=True)
+        self.tablaErrores.tag_configure("error", foreground=e.ERROR_TEXTO)
+
+    @property
+    def modelo(self):
+        return self.app.resultadosBanco
+
+    def refrescar(self):
+        if not self.mes.get().strip():
+            self.mes.insert(0, self.modelo.mesPorDefecto())
+        self.ayuda.configure(text=f"Se lee el fichero resultado_AAAA-MM.txt de la carpeta {self.modelo.carpeta}, "
+                                  "con una línea por recibo: id;COBRADO o id;DEVUELTO.")
+
+    def _limpiarResumen(self):
+        self.tablaErrores.delete(*self.tablaErrores.get_children())
+        self.cifras.configure(text="Todavía no se ha importado ningún fichero")
+
+    def importar(self):
+        self.aviso.ocultar()
+        self._limpiarResumen()
+        try:
+            r = self.modelo.importarResultado(self.mes.get().strip() or None)
+        except ReciboError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.cifras.configure(text=f"{r['cobrados']} cobrado(s) · {r['devueltos']} devuelto(s) · "
+                                   f"{r['erroneos']} erróneo(s)")
+        for i, err in enumerate(r["errores"]):
+            self.tablaErrores.insert("", "end", iid=str(i), tags=("error",),
+                                     values=(err["linea"], err["motivo"]))
+        self.aviso.mostrar(r["mensaje"], "ok" if not r["errores"] else "info")
+
+    def generarPrueba(self):
+        self.aviso.ocultar()
+        try:
+            ruta = self.modelo.generarFicheroPrueba(self.mes.get().strip() or None)
+        except ReciboError as error:
+            self.aviso.mostrar(str(error), "error")
+            return
+        self.aviso.mostrar(f"Fichero de prueba del banco generado: {ruta}. Ya se puede importar.", "info")
