@@ -1,0 +1,36 @@
+HU14. Importar el resultado del banco para saber qué recibos se han cobrado
+===========================================================================
+Responsable: José María García Galán · Rama: HU-14-resultado-banco · Esfuerzo: 5 (depende de HU13)
+Respuestas del Product Owner (Claudio de la Riva) incorporadas en la historia.
+
+Descripción: Como administración, quiero importar el resultado del banco para saber qué recibos se
+han cobrado y cuáles se han devuelto.
+
+Criterios de aceptación:
+1. Entrada: el mes (por defecto, el actual). Se lee resultado_<mes>.txt de la carpeta banco/. El
+   fichero simula la respuesta del banco, lo preparamos nosotros como dato de prueba y no tiene
+   cabecera: una línea por recibo, id;resultado.
+2. Si el fichero no existe se muestra un error; si está vacío, «El fichero no contiene resultados».
+3. El resultado solo puede ser COBRADO o DEVUELTO. Una línea con otro valor o mal formada se
+   informa como error con su número de línea.
+4. Si el recibo no existe, no es de la remesa de ese mes o ya estaba procesado, se informa como
+   error y no se modifica.
+5. Cada recibo pasa de «emitido» a «cobrado» o «devuelto». Solo se registra el estado (y la fecha
+   en que se importa).
+6. Resumen con el número de cobrados, devueltos y erróneos y la lista de errores (línea y motivo).
+7. Id repetido: se procesa la primera línea y la segunda es un error. Importar dos veces el mismo
+   fichero: la segunda vez todas las líneas son erróneas y no cambia nada.
+8. Los recibos emitidos que no aparecen en el fichero se quedan como «emitido».
+Fuera de alcance: el tratamiento de los recibos devueltos o no recibidos (otras historias).
+
+Decisiones de implementación:
+- Si no se ha emitido la remesa del mes, no se importa nada («No se ha emitido la remesa de ...»).
+- Las líneas en blanco se ignoran y el resultado se admite en mayúsculas o minúsculas.
+- Todo el fichero se importa en una única transacción.
+- Botón «Generar fichero de prueba»: crea resultado_<mes>.txt con todos los recibos emitidos de la
+  remesa (uno de cada cuatro DEVUELTO y el resto COBRADO) para simular la respuesta del banco.
+
+Implementación:
+- src/recibos/resultadoBancoModel.py.
+- src/gui/paginasRecibos.py: pestaña «Resultado del banco» de la pantalla «Recibos».
+- test/testResultadoBanco.py y test/testGuiRecibos.py.

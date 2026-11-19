@@ -12,6 +12,7 @@ try:
     import tkinter  # noqa: F401
     from src.gui.app import CentroDeportivoApp
     from src.recibos.remesaModel import RemesaModel
+    from src.recibos.resultadoBancoModel import ResultadoBancoModel
     HAY_TK = True
 except ImportError:
     HAY_TK = False
@@ -56,6 +57,7 @@ class TestGuiRecibos(unittest.TestCase):
 
     def prepararModelos(self):
         self.app.remesas = RemesaModel(self.db_path, carpeta=self.carpeta, hoyFijo=HOY)
+        self.app.resultadosBanco = ResultadoBancoModel(self.db_path, carpeta=self.carpeta, hoyFijo=HOY)
 
     def testEmitirRemesaConConfirmacion(self):
         t = self.p.remesa
@@ -83,6 +85,25 @@ class TestGuiRecibos(unittest.TestCase):
         t.mes.insert(0, "2026-08")
         t.emitir()
         self.assertEqual(self.p.aviso.mensaje, "No hay inscripciones activas en agosto de 2026")
+
+    def testImportarResultadoDelBanco(self):
+        self.app.remesas.emitirRemesa("2026-11")
+        self.p.pestanas.select(self.p.resultado)
+        self.app.update()
+        t = self.p.resultado
+        self.assertEqual(t.mes.get(), "2026-11")
+        t.importar()
+        self.assertEqual(self.p.aviso.tipo, "error")
+        self.assertIn("No se encuentra el fichero", self.p.aviso.mensaje)
+        t.generarPrueba()
+        self.assertIn("resultado_2026-11.txt", self.p.aviso.mensaje)
+        with open(os.path.join(self.carpeta, "resultado_2026-11.txt"), "a", encoding="utf-8") as fichero:
+            fichero.write("999;COBRADO\n")
+        t.importar()
+        self.assertEqual(self.p.aviso.tipo, "info")
+        self.assertEqual(t.cifras.cget("text"), "10 cobrado(s) · 3 devuelto(s) · 1 erróneo(s)")
+        filas = t.tablaErrores.get_children()
+        self.assertEqual(t.tablaErrores.item(filas[0], "values")[1], "El recibo 999 no existe")
 
 
 if __name__ == '__main__':

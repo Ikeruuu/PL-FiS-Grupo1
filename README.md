@@ -75,8 +75,8 @@ Además, **Oferta disponible** (consultar la oferta abierta a inscripción con f
 inscripción** (con confirmación y plazos). Ver `doc/HU-consultar-oferta.txt`,
 `doc/HU-mis-inscripciones.txt` y `doc/HU-cancelar-inscripcion.txt`.
 
-**Recibos** (control económico, Sprint 2): emitir la remesa mensual de recibos (HU13). Los ficheros
-que se intercambian con el banco se guardan en la carpeta `banco/`. Ver `doc/HU-13-emitir-remesa.txt`.
+**Recibos** (control económico, Sprint 2): emitir la remesa mensual de recibos (HU13) e importar el resultado del banco (HU14). Los ficheros
+que se intercambian con el banco se guardan en la carpeta `banco/`. Ver `doc/HU-13-emitir-remesa.txt` y `doc/HU-14-resultado-banco.txt`.
 
 > Nota: en cada arranque se **borra y recrea** el esquema y se recargan los datos
 > iniciales (fíjate en `src/main.py`). En consola, el menú principal se cierra con la opción 0.
