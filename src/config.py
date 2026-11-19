@@ -23,3 +23,6 @@ SCHEMA_PATH = BASE_DIR / "resources" / "schema.sql"
 DATA_PATH = BASE_DIR / "resources" / "data.sql"
 #Datos de ejemplo del Sprint 2: se cargan después de DATA_PATH solo al arrancar la aplicación
 DATA_SPRINT2_PATH = BASE_DIR / "resources" / "dataSprint2.sql"
+#HU13 y HU14: carpeta donde se dejan los ficheros que se intercambian con el banco
+#(remesa_AAAA-MM.txt que se envía y resultado_AAAA-MM.txt que devuelve)
+BANCO_DIR = BASE_DIR / "banco"

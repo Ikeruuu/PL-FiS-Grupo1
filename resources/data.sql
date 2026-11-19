@@ -88,3 +88,11 @@ insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numS
 --No socios
 insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'20000001F','Jorge','Sánchez Vega','1995-08-08','611222001',null,null,null);
 insert into Persona(id,dni,nombre,apellidos,fechaNacimiento,telefono,correo,numSocio,fechaAltaSocio) values(null,'20000002G','Elena','Iglesias Prieto',null,null,'elena.iglesias@example.com',null,null);
+--Cuenta bancaria de cada persona para cobrar los recibos (HU13). IBAN de prueba, sin espacios.
+update Persona set cuentaBancaria = 'ES9121000418450200051332' where dni = '10000001A';
+update Persona set cuentaBancaria = 'ES7921000813610123456789' where dni = '10000002B';
+update Persona set cuentaBancaria = 'ES1000492352082414205416' where dni = '10000003C';
+update Persona set cuentaBancaria = 'ES6000491500051234567892' where dni = '10000004D';
+update Persona set cuentaBancaria = 'ES8023100001180000012345' where dni = '10000005E';
+update Persona set cuentaBancaria = 'ES3801825322510201234567' where dni = '20000001F';
+update Persona set cuentaBancaria = 'ES2714650100722030876293' where dni = '20000002G';

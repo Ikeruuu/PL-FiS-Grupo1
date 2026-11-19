@@ -32,3 +32,5 @@ database_demo.db
 database_demo.db-journal
 database_demo.db-wal
 database_demo.db-shm
+# Ficheros que se intercambian con el banco (HU13 y HU14)
+banco/

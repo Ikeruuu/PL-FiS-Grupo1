@@ -2,6 +2,8 @@
 
 drop table if exists Employee;
 drop table if exists Company;
+drop table if exists Recibo;
+drop table if exists Remesa;
 drop table if exists Asistencia;
 drop table if exists SesionCancelada;
 drop table if exists Inscripcion;
@@ -86,6 +88,9 @@ create table Persona (id integer not null primary key, dni varchar(20) not null 
                       nombre varchar(40) not null, apellidos varchar(80) not null,
                       fechaNacimiento varchar(10), telefono varchar(20), correo varchar(80),
                       numSocio integer unique, fechaAltaSocio varchar(10),
+                      --HU13: cuenta bancaria (IBAN sin espacios) en la que se cobran los recibos.
+                      --Según el PO no puede haber socios sin cuenta; la remesa avisa si falta.
+                      cuentaBancaria varchar(34),
                       check (numSocio is null or numSocio > 0),
                       check ((numSocio is null) = (fechaAltaSocio is null)),
                       check (telefono is not null or correo is not null)
@@ -133,3 +138,22 @@ create table SesionCancelada (idActividad integer not null, fecha varchar(10) no
                               primary key (idActividad, fecha, horaInicio),
                               foreign key (idActividad) references Actividad (id)
                              );
+
+--HU13: remesa mensual de recibos que se envía al banco (una por mes, AAAA-MM). Se pasa al cobro
+--a principio de mes y no se puede emitir dos veces la del mismo mes.
+create table Remesa (mes varchar(7) not null primary key, fechaEmision varchar(10) not null,
+                     fichero varchar(60) not null
+                    );
+
+--HU13: un recibo por cada inscripción activa del mes, con la cuota mensual de la actividad
+--(sin prorrateo). El socio y la actividad se obtienen de la inscripción y la fecha de emisión,
+--de la remesa. HU14: el estado pasa a COBRADO o DEVUELTO al importar el resultado del banco.
+create table Recibo (id integer not null primary key, idInscripcion integer not null,
+                     mes varchar(7) not null, importe real not null, estado varchar(10) not null,
+                     fechaResultado varchar(26),
+                     foreign key (idInscripcion) references Inscripcion (id),
+                     foreign key (mes) references Remesa (mes),
+                     unique (idInscripcion, mes),
+                     check (importe > 0),
+                     check (estado in ('EMITIDO', 'COBRADO', 'DEVUELTO'))
+                    );
