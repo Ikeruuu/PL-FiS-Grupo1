@@ -257,33 +257,32 @@ class PestanaConsulta(ttk.Frame):
         ttk.Button(fila, text="Consultar", style="Primario.TButton",
                    command=self.consultar).pack(side="left", anchor="s", padx=(6, 0))
 
-        cuerpo = ttk.Frame(self)
-        cuerpo.pack(fill="both", expand=True, pady=(14, 0))
-        cuerpo.columnconfigure(0, weight=2)
-        cuerpo.columnconfigure(1, weight=3)
-        cuerpo.rowconfigure(0, weight=1)
-
-        izq = tarjeta(cuerpo)
-        izq.contenedor.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
-        ttk.Label(izq, text="Ingresos por actividad", style="Seccion.TLabel").pack(anchor="w")
-        tk.Label(izq, text="Ingresos: solo recibos cobrados. Pendiente: emitidos sin respuesta del banco.",
-                 bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9)).pack(anchor="w", pady=(0, 8))
-        marco, self.tablaResumen = tabla(izq, [
-            ("actividad", "Actividad", 170, True), ("ingresos", "Ingresos", 95, False),
-            ("pendiente", "Pendiente", 95, False), ("devuelto", "Devuelto", 95, False)], altura=9)
+        #El resumen por actividad arriba y el listado de recibos debajo, a todo el ancho
+        resumen = tarjeta(self, fill="both", expand=True, pady=(14, 0))
+        cabeza = tk.Frame(resumen, bg=e.TARJETA)
+        cabeza.pack(fill="x", pady=(0, 8))
+        ttk.Label(cabeza, text="Ingresos por actividad", style="Seccion.TLabel").pack(side="left")
+        tk.Label(cabeza, text="Ingresos: solo recibos cobrados · Pendiente: emitidos sin respuesta del banco",
+                 bg=e.TARJETA, fg=e.TEXTO_SUAVE, font=e.fuente(9)).pack(side="left", padx=(14, 0))
+        marco, self.tablaResumen = tabla(resumen, [
+            ("actividad", "Actividad", 300, True), ("ingresos", "Ingresos", 130, False),
+            ("pendiente", "Pendiente", 130, False), ("devuelto", "Devuelto", 130, False)], altura=5)
         marco.pack(fill="both", expand=True)
         self.tablaResumen.tag_configure("total", font=e.fuente(10, "bold"), background=e.DIA_FONDO)
         self.tablaResumen.tag_configure("sinRecibos", foreground=e.NO_CABE_TEXTO)
+        #Los totales también se muestran debajo, para verlos sin desplazar la tabla
+        self.textoTotales = tk.Label(resumen, text="", bg=e.TARJETA, fg=e.TEXTO, anchor="w",
+                                     font=e.fuente(10, "bold"))
+        self.textoTotales.pack(fill="x", pady=(8, 0))
 
-        der = tarjeta(cuerpo)
-        der.contenedor.grid(row=0, column=1, sticky="nsew")
-        self.tituloRecibos = ttk.Label(der, text="Recibos", style="Seccion.TLabel")
-        self.tituloRecibos.pack(anchor="w", pady=(0, 10))
-        marco, self.tablaRecibos = tabla(der, [
-            ("id", "Recibo", 60, False), ("socio", "Socio", 190, True),
-            ("actividad", "Actividad", 150, True), ("mes", "Mes", 75, False),
-            ("importe", "Importe", 80, False), ("emision", "Emisión", 90, False),
-            ("estado", "Estado", 80, False)], altura=9)
+        recibos = tarjeta(self, fill="both", expand=True, pady=(14, 0))
+        self.tituloRecibos = ttk.Label(recibos, text="Recibos", style="Seccion.TLabel")
+        self.tituloRecibos.pack(anchor="w", pady=(0, 8))
+        marco, self.tablaRecibos = tabla(recibos, [
+            ("id", "Recibo", 70, False), ("socio", "Socio", 250, True),
+            ("actividad", "Actividad", 180, True), ("mes", "Mes", 80, False),
+            ("importe", "Importe", 90, False), ("emision", "Emisión", 100, False),
+            ("estado", "Estado", 90, False)], altura=5)
         marco.pack(fill="both", expand=True)
         colorearEstados(self.tablaRecibos)
 
@@ -349,6 +348,9 @@ class PestanaConsulta(ttk.Frame):
         self.tablaResumen.insert("", "end", iid="total", tags=("total",), values=(
             "Total", describirImporte(t["ingresos"]), describirImporte(t["pendiente"]),
             describirImporte(t["devuelto"])))
+        self.textoTotales.configure(text=f"Total de la temporada: {describirImporte(t['ingresos'])} ingresados · "
+                                         f"{describirImporte(t['pendiente'])} pendientes · "
+                                         f"{describirImporte(t['devuelto'])} devueltos")
         for rec in r["recibos"]:
             self.tablaRecibos.insert("", "end", iid=str(rec["id"]), tags=(rec["estado"],), values=(
                 rec["id"], rec["socio"], rec["actividad"], rec["mes"], describirImporte(rec["importe"]),

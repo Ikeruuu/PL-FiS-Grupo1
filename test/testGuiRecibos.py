@@ -117,6 +117,8 @@ class TestGuiRecibos(unittest.TestCase):
         self.assertEqual(t.tablaResumen.item(filas[0], "values")[:2], ("Pádel medio", "120,00 €"))
         self.assertEqual(t.tablaResumen.item("total", "values"),
                          ("Total", "255,00 €", "20,00 €", "45,00 €"))
+        self.assertEqual(t.textoTotales.cget("text"), "Total de la temporada: 255,00 € ingresados · "
+                                                       "20,00 € pendientes · 45,00 € devueltos")
         self.assertEqual(len(t.tablaRecibos.get_children()), 13)
         t.comboEstado.current(3)
         t.consultar()
