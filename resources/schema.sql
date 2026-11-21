@@ -4,6 +4,7 @@ drop table if exists Employee;
 drop table if exists Company;
 drop table if exists Asistencia;
 drop table if exists SesionCancelada;
+drop table if exists HorarioHistoricoFranjas;
 drop table if exists InscripcionHistorica;
 drop table if exists ActividadHistorica;
 drop table if exists Inscripcion;
