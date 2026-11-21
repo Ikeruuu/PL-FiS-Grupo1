@@ -7,6 +7,8 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import messagebox, ttk
 
+from src.gui.paginaRankingDemanda import PaginaRankingDemanda
+from src.inscripciones.rankingDemandaModel import RankingDemandaModel
 from src.gui.paginas import PaginaConsultaInscritos
 from src.inscripciones.consultaInscritosModel import ConsultaInscritosModel
 from src.inscripciones.listaEsperaModel import ListaEsperaModel
@@ -49,7 +51,8 @@ SECCIONES = [("inicio", "Inicio", PaginaInicio),
              ("cancelar", " Cancelar inscripción", PaginaCancelar),
              ("consultaInscritos", "Inscritos por actividad", PaginaConsultaInscritos),
              ("asistencia", "Asistencia", PaginaAsistencia),
-             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal)]
+             ("ocupacionReal", "Ocupación real", PaginaOcupacionReal),
+             ("rankingDemanda", "Ranking de demanda", PaginaRankingDemanda),]
 
 
 class CentroDeportivoApp(tk.Tk):
@@ -78,6 +81,7 @@ class CentroDeportivoApp(tk.Tk):
         self.cancelaciones = CancelacionModel(db_path)
         self.listaEspera = ListaEsperaModel(db_path)
         self.consultaInscritos = ConsultaInscritosModel(db_path)
+        self.rankingDemanda = RankingDemandaModel(db_path)
         self.modalidadesInstalacion = ModalidadInstalacionModel(db_path)
         self.ofertaAnterior = OfertaAnteriorModel(db_path)
         self.asistencia = AsistenciaModel(db_path)
